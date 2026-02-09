@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: nsu-backend
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+# Rmb to generate a new one when deploying
+jwt:
+  secret_key: 1zYXesEADTwdSWVn5I//DRqStEMuYKrMJNs9rGKk9n4=

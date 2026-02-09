@@ -1,0 +1,22 @@
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:17
+    environment:
+      - POSTGRES_DB=nsu
+      - POSTGRES_PASSWORD=123
+      - POSTGRES_USER=postgres
+    ports:
+      - '5434:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+  redis:
+    container_name: redis
+    image: redis:alpine
+    ports:
+      - '6378:6379'
+    volumes:
+      - redis-data:/data
+volumes:
+  db-data:
+  redis-data:
