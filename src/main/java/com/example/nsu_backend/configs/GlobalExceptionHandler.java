@@ -2,10 +2,11 @@ package com.example.nsu_backend.configs;
 
 import com.example.nsu_backend.dto.ApiResponse;
 import com.example.nsu_backend.dto.ErrorDetail;
+import com.example.nsu_backend.errorCodes.ApiErrorCode;
 import com.example.nsu_backend.errorCodes.AuthErrorCode;
 import com.example.nsu_backend.errorCodes.DatabaseErrorCode;
 import com.example.nsu_backend.errorCodes.GeneralErrorCode;
-import com.example.nsu_backend.errorCodes.RouteErrorCode;
+import com.example.nsu_backend.exceptions.InvalidCategoryException;
 import com.example.nsu_backend.exceptions.TokenRefreshException;
 import com.example.nsu_backend.exceptions.UserLoginException;
 import org.springframework.dao.DataAccessException;
@@ -49,6 +50,14 @@ public class GlobalExceptionHandler {
                 .body(new ApiResponse<>(error));
     }
 
+    // Handled invalid category exceptions
+    @ExceptionHandler(InvalidCategoryException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnauthorizedExceptions(InvalidCategoryException e) {
+        ErrorDetail error = new ErrorDetail(GeneralErrorCode.INVALID_FIELD.name(), e.getMessage());
+        return ResponseEntity.status(BAD_REQUEST)
+                .body(new ApiResponse<>(error));
+    }
+
     // Handle token refresh exceptions
     @ExceptionHandler(TokenRefreshException.class)
     public ResponseEntity<ApiResponse<Void>> handleTokenRefreshExceptions(TokenRefreshException e) {
@@ -68,7 +77,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleInvalidHttpRequestMethods(HttpRequestMethodNotSupportedException e) {
         return ResponseEntity
                 .status(HttpStatus.METHOD_NOT_ALLOWED)
-                .body(new ApiResponse<>(new ErrorDetail(RouteErrorCode.UNSUPPORTED_HTTP_METHOD.name(), e.getMessage())));
+                .body(new ApiResponse<>(new ErrorDetail(ApiErrorCode.UNSUPPORTED_HTTP_METHOD.name(), e.getMessage())));
     }
 
     //Handles exceptions from @Valid

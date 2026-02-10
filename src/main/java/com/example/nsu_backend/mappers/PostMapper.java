@@ -10,7 +10,7 @@ import org.mapstruct.MappingConstants;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface PostMapper {
-    @Mapping(target = "postId", source = "post.id")
+    @Mapping(target = "id", source = "post.id")
     @Mapping(target = "authorId", source = "post.author.id")
     PostDetails postToPostDto(Post post);
 
