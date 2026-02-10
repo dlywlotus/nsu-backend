@@ -15,7 +15,6 @@ public record CreatePostRequest(
         @Size(max = 1000, message = "Post title must be at at most 1000 characters.")
         String body,
 
-        @NotBlank
         String category,
 
         @NotNull
