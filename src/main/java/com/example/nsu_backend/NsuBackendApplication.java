@@ -10,7 +10,6 @@ public class NsuBackendApplication {
         SpringApplication.run(NsuBackendApplication.class, args);
     }
 
-    //TODO: Implement likes logic
     //TODO: Add update post logic
     //TODO: Add update user details/reset password logic
     //TODO: Set up DB Tables with flyway instead of jpa

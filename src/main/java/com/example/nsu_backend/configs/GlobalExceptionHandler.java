@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
                 .body(new ApiResponse<>(error));
     }
 
-    // Catches specific constraint violations (Unique keys, Foreign keys)
+    // Catches constraint violations (Unique keys, Foreign keys)
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataConflicts(DataIntegrityViolationException e) {
         ErrorDetail error = new ErrorDetail(DatabaseErrorCode.DATA_CONSTRAINT_VIOLATION.name(), e.getMessage());
