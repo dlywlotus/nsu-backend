@@ -25,7 +25,6 @@ public class PostController {
     private final PostService postService;
     private final AuthUtils authUtils;
 
-
     /**
      * Retrieves all posts that match the provided filters, sorts them and then returns them in page format
      * The page, size and sort query params are converted to pageable by spring automatically

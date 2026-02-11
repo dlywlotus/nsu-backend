@@ -21,7 +21,6 @@ import java.util.UUID;
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false)
     private UUID id;
 
     @Column(nullable = false)
