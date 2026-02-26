@@ -1,17 +1,9 @@
 package com.example.nsu_backend.controllers;
 
-import com.example.nsu_backend.dto.LogoutRequest;
-import com.example.nsu_backend.dto.TokenRefreshRequest;
-import com.example.nsu_backend.dto.UserAuthRequest;
-import com.example.nsu_backend.dto.UserAuthResponse;
-import com.example.nsu_backend.entities.User;
-import com.example.nsu_backend.exceptions.TokenRefreshException;
-import com.example.nsu_backend.exceptions.UserLoginException;
-import com.example.nsu_backend.services.UserService;
-import com.example.nsu_backend.utils.AuthUtils;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,9 +11,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+import com.example.nsu_backend.dto.LogoutRequest;
+import com.example.nsu_backend.dto.SignInRequest;
+import com.example.nsu_backend.dto.SignUpRequest;
+import com.example.nsu_backend.dto.TokenRefreshRequest;
+import com.example.nsu_backend.dto.UserAuthResponse;
+import com.example.nsu_backend.entities.User;
+import com.example.nsu_backend.exceptions.TokenRefreshException;
+import com.example.nsu_backend.exceptions.UserLoginException;
+import com.example.nsu_backend.services.UserService;
+import com.example.nsu_backend.utils.AuthUtils;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -33,13 +36,13 @@ public class UserAuthenticationController {
     private final AuthUtils authUtils;
 
     @PostMapping("/sign_up")
-    public UserAuthResponse signUp(@Valid @RequestBody UserAuthRequest request) {
-        User newUser = userService.saveUser(request);
-        return new UserAuthResponse(authUtils.createJwtTokens(newUser.getId(), request.deviceId()), newUser.getId());
+    public Map<String, String> signUp(@Valid @RequestBody SignUpRequest request) {
+        userService.saveUser(request);
+        return Map.of("message", "User has signed up successfully");
     }
 
     @PostMapping("/sign_in")
-    public UserAuthResponse signIn(@Valid @RequestBody UserAuthRequest request) {
+    public UserAuthResponse signIn(@Valid @RequestBody SignInRequest request) {
         User user = userService.getUserByUsername(request.username())
                 .orElseThrow(() -> new UserLoginException("User does not exist"));
 
