@@ -3,7 +3,7 @@ package com.example.nsu_backend.dto;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public record UserAuthRequest(
+public record SignInRequest(
         @NotNull
         @Size(min = 3, message = "Must be at least 3 characters.")
         @Size(max = 15, message = "Must be at at most 15 characters.")

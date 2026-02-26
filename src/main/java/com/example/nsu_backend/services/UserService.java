@@ -1,13 +1,15 @@
 package com.example.nsu_backend.services;
 
-import com.example.nsu_backend.dto.UserAuthRequest;
-import com.example.nsu_backend.entities.User;
-import com.example.nsu_backend.repositories.UserRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.Optional;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import com.example.nsu_backend.dto.SignUpRequest;
+import com.example.nsu_backend.entities.User;
+import com.example.nsu_backend.repositories.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -19,10 +21,10 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
-    public User saveUser(UserAuthRequest userAuthRequest) {
+    public User saveUser(SignUpRequest request) {
         User user = User.builder()
-                .username(userAuthRequest.username())
-                .encryptedPassword(passwordEncoder.encode(userAuthRequest.password()))
+                .username(request.username())
+                .encryptedPassword(passwordEncoder.encode(request.password()))
                 .build();
         return userRepository.save(user);
     }

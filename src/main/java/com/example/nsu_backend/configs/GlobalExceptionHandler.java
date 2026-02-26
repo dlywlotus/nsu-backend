@@ -1,5 +1,21 @@
 package com.example.nsu_backend.configs;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
 import com.example.nsu_backend.dto.ApiResponse;
 import com.example.nsu_backend.dto.ErrorDetail;
 import com.example.nsu_backend.errorCodes.ApiErrorCode;
@@ -10,20 +26,6 @@ import com.example.nsu_backend.exceptions.InvalidCategoryException;
 import com.example.nsu_backend.exceptions.PostNotFoundException;
 import com.example.nsu_backend.exceptions.TokenRefreshException;
 import com.example.nsu_backend.exceptions.UserLoginException;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authorization.AuthorizationDeniedException;
-import org.springframework.web.HttpRequestMethodNotSupportedException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -34,7 +36,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiResponse<>(error));
     }
-
 
     // Catches generic database issues (connection, syntax, etc.)
     @ExceptionHandler(DataAccessException.class)
@@ -83,6 +84,13 @@ public class GlobalExceptionHandler {
                 .body(new ApiResponse<>(new ErrorDetail(AuthErrorCode.INVALID_USER.name(), e.getMessage())));
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnreadableHttpMessages(HttpMessageNotReadableException e) {
+        return ResponseEntity
+                .status(BAD_REQUEST)
+                .body(new ApiResponse<>(new ErrorDetail(ApiErrorCode.BAD_REQUEST.name(), e.getMessage())));
+    }
+
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> handleInvalidHttpRequestMethods(HttpRequestMethodNotSupportedException e) {
         return ResponseEntity
@@ -96,12 +104,10 @@ public class GlobalExceptionHandler {
         List<ErrorDetail> errors = new ArrayList<>();
 
         // Extract each field name and its corresponding error message
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
-            errors.add(new ErrorDetail(
-                    GeneralErrorCode.INVALID_FIELD.name(),
-                    error.getDefaultMessage(),
-                    error.getField()));
-        });
+        ex.getBindingResult().getFieldErrors().forEach(error -> errors.add(new ErrorDetail(
+                GeneralErrorCode.INVALID_FIELD.name(),
+                error.getDefaultMessage(),
+                error.getField())));
 
         return ResponseEntity.status(BAD_REQUEST)
                 .body(new ApiResponse<>(errors));
