@@ -1,9 +1,6 @@
 package com.example.nsu_backend.controllers;
 
-import com.example.nsu_backend.dto.CreatePostRequest;
-import com.example.nsu_backend.dto.DeletePostRequest;
-import com.example.nsu_backend.dto.GetPostRequest;
-import com.example.nsu_backend.dto.PostDetails;
+import com.example.nsu_backend.dto.*;
 import com.example.nsu_backend.enums.Category;
 import com.example.nsu_backend.exceptions.InvalidCategoryException;
 import com.example.nsu_backend.services.PostService;
@@ -51,20 +48,28 @@ public class PostController {
     }
 
     @PostMapping
-    public PostDetails createPost(@Valid @RequestBody CreatePostRequest request) {
-        if (!authUtils.getCurrentUserId().equals(request.authorId().toString())) {
+    public PostDetails createPost(@Valid @RequestBody AddPostRequest request) {
+        if (!authUtils.getCurrentUserId().equals(request.getAuthorId().toString())) {
             throw new AuthorizationDeniedException("Can't create a post on behalf of another user.");
-        }
-
-        if (Arrays.stream(Category.values()).noneMatch(c -> c.toString().equals(request.category()))) {
-            throw new InvalidCategoryException("The provided category must be one of: " + Arrays.toString(Category.values()));
         }
 
         return postService.createPost(request);
     }
 
+    @PutMapping
+    public PostDetails updatePost(@Valid @RequestBody UpdatePostRequest request) {
+        if (!authUtils.getCurrentUserId().equals(request.getAuthorId().toString())) {
+            throw new AuthorizationDeniedException("Can't update a post on behalf of another user.");
+        }
+
+        return postService.updatePost(request);
+    }
+
     @DeleteMapping
     public Map<String, String> deletePost(@Valid @RequestBody DeletePostRequest request) {
+        if (!authUtils.getCurrentUserId().equals(request.authorId().toString())) {
+            throw new AuthorizationDeniedException("Can't delete a post on behalf of another user.");
+        }
         postService.deletePost(request);
         return Map.of("message", "Post " + request.postId() + " has been deleted.");
     }

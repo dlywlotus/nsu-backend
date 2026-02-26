@@ -1,6 +1,6 @@
 package com.example.nsu_backend.mappers;
 
-import com.example.nsu_backend.dto.CreatePostRequest;
+import com.example.nsu_backend.dto.AddPostRequest;
 import com.example.nsu_backend.dto.PostDetails;
 import com.example.nsu_backend.entities.Post;
 import com.example.nsu_backend.entities.User;
@@ -17,6 +17,5 @@ public interface PostMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "author", source = "author")
-    Post postDtoToNewPost(CreatePostRequest dto, User author);
-
+    Post addPostDtoToNewPost(AddPostRequest dto, User author);
 }
