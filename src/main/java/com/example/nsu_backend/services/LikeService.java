@@ -1,28 +1,38 @@
 package com.example.nsu_backend.services;
 
-import com.example.nsu_backend.dto.LikeDetails;
-import com.example.nsu_backend.dto.LikeRequest;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
 import com.example.nsu_backend.entities.Like;
-import com.example.nsu_backend.mappers.LikeMapper;
 import com.example.nsu_backend.repositories.LikeRepository;
+import com.example.nsu_backend.repositories.PostRepository;
+import com.example.nsu_backend.repositories.UserRepository;
+import com.example.nsu_backend.utils.AuthUtils;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class LikeService {
     private final LikeRepository likeRepository;
-    private final LikeMapper likeMapper;
+    private final UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final AuthUtils authUtils;
 
-    public LikeDetails addLike(LikeRequest request) {
-        Like like = likeMapper.likeRequestToLike(request);
-        Like newLike = likeRepository.save(like);
-        return likeMapper.likeToLikeDto(newLike);
+    public void addLike(UUID postId) {
+        UUID userId = authUtils.getCurrentUserId();
+        Like like = Like.builder()
+                .user(userRepository.getReferenceById(userId))
+                .post(postRepository.getReferenceById(postId))
+                .build();
+        likeRepository.save(like);
     }
 
     @Transactional
-    public void removeLike(LikeRequest request) {
-        likeRepository.deleteByUserIdAndPostId(request.userId(), request.postId());
+    public void removeLike(UUID postId) {
+        UUID userId = authUtils.getCurrentUserId();
+        likeRepository.deleteByUserIdAndPostId(userId, postId);
     }
 }
