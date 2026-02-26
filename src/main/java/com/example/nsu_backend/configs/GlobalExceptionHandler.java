@@ -7,6 +7,7 @@ import com.example.nsu_backend.errorCodes.AuthErrorCode;
 import com.example.nsu_backend.errorCodes.DatabaseErrorCode;
 import com.example.nsu_backend.errorCodes.GeneralErrorCode;
 import com.example.nsu_backend.exceptions.InvalidCategoryException;
+import com.example.nsu_backend.exceptions.PostNotFoundException;
 import com.example.nsu_backend.exceptions.TokenRefreshException;
 import com.example.nsu_backend.exceptions.UserLoginException;
 import org.springframework.dao.DataAccessException;
@@ -26,6 +27,15 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    //Post not found exceptions
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePostNotFound(PostNotFoundException e) {
+        ErrorDetail error = new ErrorDetail(ApiErrorCode.POST_NOT_FOUND.name(), e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(error));
+    }
+
+
     // Catches generic database issues (connection, syntax, etc.)
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<ApiResponse<Void>> handleDatabaseErrors(DataAccessException e) {
@@ -45,7 +55,7 @@ public class GlobalExceptionHandler {
     // Handled authorization exceptions
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnauthorizedExceptions(AuthorizationDeniedException e) {
-        ErrorDetail error = new ErrorDetail(AuthErrorCode.NOT_ALLOWED.name(), e.getMessage());
+        ErrorDetail error = new ErrorDetail(AuthErrorCode.NOT_AUTHORIZED.name(), e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(new ApiResponse<>(error));
     }

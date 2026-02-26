@@ -1,10 +1,10 @@
 package com.example.nsu_backend.services;
 
-import com.example.nsu_backend.dto.CreatePostRequest;
-import com.example.nsu_backend.dto.DeletePostRequest;
-import com.example.nsu_backend.dto.GetPostRequest;
-import com.example.nsu_backend.dto.PostDetails;
+import com.example.nsu_backend.dto.*;
 import com.example.nsu_backend.entities.Post;
+import com.example.nsu_backend.enums.Category;
+import com.example.nsu_backend.exceptions.InvalidCategoryException;
+import com.example.nsu_backend.exceptions.PostNotFoundException;
 import com.example.nsu_backend.mappers.PostMapper;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
@@ -13,9 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -26,14 +24,33 @@ public class PostService {
     private final PostMapper postMapper;
     private final JdbcClient jdbcClient;
 
-    public PostDetails createPost(CreatePostRequest request) {
-        Post post = postMapper.postDtoToNewPost(request, userRepository.getReferenceById(request.authorId()));
+    public PostDetails createPost(AddPostRequest request) {
+        if (Arrays.stream(Category.values()).noneMatch(c -> c.toString().equals(request.getCategory()))) {
+            throw new InvalidCategoryException("The provided category must be one of: " + Arrays.toString(Category.values()));
+        }
+
+        Post post = postMapper.addPostDtoToNewPost(request, userRepository.getReferenceById(request.getAuthorId()));
         Post newPost = postRepository.save(post);
         return postMapper.postToPostDto(newPost);
     }
 
-    public void deletePost(DeletePostRequest request) {
-        postRepository.deleteById(request.postId());
+    public PostDetails updatePost(UpdatePostRequest request) {
+        if (Objects.nonNull(request.getCategory()) &&
+                Arrays.stream(Category.values()).noneMatch(c -> c.toString().equals(request.getCategory()))) {
+            throw new InvalidCategoryException("The provided category must be one of: " + Arrays.toString(Category.values()));
+        }
+
+        Post oldPost = postRepository.findById(request.getPostId())
+                .orElseThrow(() -> new PostNotFoundException("The post does not exist"));
+        Post post = Post.builder()
+                .id(request.getPostId())
+                .title(Optional.ofNullable(request.getTitle()).orElse(oldPost.getTitle()))
+                .body(Optional.ofNullable(request.getBody()).orElse(oldPost.getBody()))
+                .category(Optional.ofNullable(request.getCategory()).orElse(oldPost.getCategory()))
+                .author(userRepository.getReferenceById(request.getAuthorId()))
+                .createdAt(oldPost.getCreatedAt()).build();
+        Post newPost = postRepository.save(post);
+        return postMapper.postToPostDto(newPost);
     }
 
     public List<PostDetails> getPosts(GetPostRequest request) {
@@ -75,4 +92,11 @@ public class PostService {
                 .params(paramMap)
                 .query(PostDetails.class).list();
     }
+
+    public void deletePost(DeletePostRequest request) {
+        Post oldPost = postRepository.findById(request.postId())
+                .orElseThrow(() -> new PostNotFoundException("The post does not exist"));
+        postRepository.deleteById(request.postId());
+    }
+
 }

@@ -6,5 +6,4 @@ public enum AuthErrorCode {
     INVALID_ACCESS_TOKEN,
     EXPIRED_ACCESS_TOKEN,
     EXPIRED_REFRESH_TOKEN,
-    NOT_ALLOWED
 }
