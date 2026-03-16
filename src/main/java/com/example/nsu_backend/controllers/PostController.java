@@ -57,6 +57,6 @@ public class PostController {
     @DeleteMapping
     public Map<String, String> deletePost(@Valid @RequestBody DeletePostRequest request) {
         postService.deletePost(request);
-        return Map.of("message", "Post " + request.postId() + " has been deleted.");
+        return Map.of("message", "The post has been deleted successfully!.");
     }
 }

@@ -20,9 +20,9 @@ public class CommentController {
         return commentService.addComment(request);
     }
 
-    @DeleteMapping
-    public Map<String, String> deleteComment(@RequestParam Long id) {
+    @DeleteMapping("/{id}")
+    public Map<String, String> deleteComment(@PathVariable Long id) {
         commentService.deleteComment(id);
-        return Map.of("message", "Comment" + id + "has been deleted successfully!");
+        return Map.of("message", "The comment has been deleted successfully!");
     }
 }

@@ -30,7 +30,7 @@ public class Post {
     @Column(nullable = false)
     private String body;
 
-    @Column(columnDefinition = "VARCHAR(25) CHECK (category IN ('EVENTS', 'STUDIES', 'HOUSING', 'OTHERS'))")
+    @Column(nullable = false)
     private String category;
 
     @CreatedDate

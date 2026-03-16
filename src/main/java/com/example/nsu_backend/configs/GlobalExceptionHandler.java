@@ -1,10 +1,15 @@
 package com.example.nsu_backend.configs;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-
-import java.util.ArrayList;
-import java.util.List;
-
+import com.example.nsu_backend.dto.ApiResponse;
+import com.example.nsu_backend.dto.ErrorDetail;
+import com.example.nsu_backend.errorCodes.ApiErrorCode;
+import com.example.nsu_backend.errorCodes.AuthErrorCode;
+import com.example.nsu_backend.errorCodes.DatabaseErrorCode;
+import com.example.nsu_backend.errorCodes.GeneralErrorCode;
+import com.example.nsu_backend.exceptions.InvalidCategoryException;
+import com.example.nsu_backend.exceptions.TokenRefreshException;
+import com.example.nsu_backend.exceptions.UserLoginException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -16,23 +21,17 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.example.nsu_backend.dto.ApiResponse;
-import com.example.nsu_backend.dto.ErrorDetail;
-import com.example.nsu_backend.errorCodes.ApiErrorCode;
-import com.example.nsu_backend.errorCodes.AuthErrorCode;
-import com.example.nsu_backend.errorCodes.DatabaseErrorCode;
-import com.example.nsu_backend.errorCodes.GeneralErrorCode;
-import com.example.nsu_backend.exceptions.InvalidCategoryException;
-import com.example.nsu_backend.exceptions.PostNotFoundException;
-import com.example.nsu_backend.exceptions.TokenRefreshException;
-import com.example.nsu_backend.exceptions.UserLoginException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    //Post not found exceptions
-    @ExceptionHandler(PostNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handlePostNotFound(PostNotFoundException e) {
-        ErrorDetail error = new ErrorDetail(ApiErrorCode.POST_NOT_FOUND.name(), e.getMessage());
+    // Catches entity not found exceptions
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePostNotFound(EntityNotFoundException e) {
+        ErrorDetail error = new ErrorDetail(ApiErrorCode.ENTITY_NOT_FOUND.name(), e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiResponse<>(error));
     }
