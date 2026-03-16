@@ -17,6 +17,7 @@ public interface PostMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "author", source = "author")
+    @Mapping(target = "comments", ignore = true)
     Post addPostDtoToNewPost(AddPostRequest dto, User author);
 
 

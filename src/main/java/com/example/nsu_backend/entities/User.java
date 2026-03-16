@@ -28,4 +28,7 @@ public class User {
 
     @OneToMany(mappedBy = "author")
     private List<Post> posts;
+
+    @OneToMany(mappedBy = "author")
+    private List<Comment> comments;
 }

@@ -1,6 +1,7 @@
 package com.example.nsu_backend.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,38 +10,35 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @Entity
+@Table(name = "comments")
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "posts")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-public class Post {
+public class Comment {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false)
+    @NotNull
     private String body;
 
-    @Column(columnDefinition = "VARCHAR(25) CHECK (category IN ('EVENTS', 'STUDIES', 'HOUSING', 'OTHERS'))")
-    private String category;
-
-    @CreatedDate
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
-    @OneToMany(mappedBy = "post")
-    private List<Comment> comments;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id", nullable = false)
+    private Comment parentComment;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
 }

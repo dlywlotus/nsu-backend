@@ -10,9 +10,13 @@ public class NsuBackendApplication {
         SpringApplication.run(NsuBackendApplication.class, args);
     }
 
-    //TODO: Add validation for like request
+    //TODO: Implement comments logic
+
+    //1. comments have one level nesting
+    //2. fields: body, postId, authorId, parentCommentId, createdAt
+    //3. comments are only fetched when page is expanded
+
     //TODO: Add update user details/reset password logic
     //TODO: Set up DB Tables with flyway instead of jpa
-    //TODO: Implement comments logic
     //TODO: Write unit tests
 }
