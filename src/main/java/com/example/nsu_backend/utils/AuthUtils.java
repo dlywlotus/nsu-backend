@@ -88,8 +88,8 @@ public class AuthUtils {
                 redisTemplate.opsForValue().get(ACCESS_TOKEN_VERSION_PREFIX + userId.toString())).orElse(1);
     }
 
-    public String getCurrentUserId() {
-        return (String) Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
-                .map(Authentication::getPrincipal).orElse("");
+    public UUID getCurrentUserId() {
+        return UUID.fromString((String) Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+                .map(Authentication::getPrincipal).orElse(""));
     }
 }

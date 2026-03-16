@@ -4,5 +4,5 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
-public record DeletePostRequest(@NotNull UUID postId, @NotNull UUID authorId) {
+public record DeletePostRequest(@NotNull UUID postId) {
 }

@@ -8,6 +8,7 @@ import com.example.nsu_backend.exceptions.PostNotFoundException;
 import com.example.nsu_backend.mappers.PostMapper;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
+import com.example.nsu_backend.utils.AuthUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -23,13 +24,14 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostMapper postMapper;
     private final JdbcClient jdbcClient;
+    private final AuthUtils authUtils;
 
     public PostDetails createPost(AddPostRequest request) {
         if (Arrays.stream(Category.values()).noneMatch(c -> c.toString().equals(request.getCategory()))) {
             throw new InvalidCategoryException("The provided category must be one of: " + Arrays.toString(Category.values()));
         }
 
-        Post post = postMapper.addPostDtoToNewPost(request, userRepository.getReferenceById(request.getAuthorId()));
+        Post post = postMapper.addPostDtoToNewPost(request, userRepository.getReferenceById(authUtils.getCurrentUserId()));
         Post newPost = postRepository.save(post);
         return postMapper.postToPostDto(newPost);
     }
@@ -47,8 +49,9 @@ public class PostService {
                 .title(Optional.ofNullable(request.getTitle()).orElse(oldPost.getTitle()))
                 .body(Optional.ofNullable(request.getBody()).orElse(oldPost.getBody()))
                 .category(Optional.ofNullable(request.getCategory()).orElse(oldPost.getCategory()))
-                .author(userRepository.getReferenceById(request.getAuthorId()))
-                .createdAt(oldPost.getCreatedAt()).build();
+                .author(userRepository.getReferenceById(authUtils.getCurrentUserId()))
+                .createdAt(oldPost.getCreatedAt())
+                .build();
         Post newPost = postRepository.save(post);
         return postMapper.postToPostDto(newPost);
     }
@@ -94,9 +97,8 @@ public class PostService {
     }
 
     public void deletePost(DeletePostRequest request) {
-        Post oldPost = postRepository.findById(request.postId())
+        postRepository.findByPostAndAuthorId(request.postId(), authUtils.getCurrentUserId())
                 .orElseThrow(() -> new PostNotFoundException("The post does not exist"));
         postRepository.deleteById(request.postId());
     }
-
 }
