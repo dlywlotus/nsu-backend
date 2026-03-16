@@ -15,6 +15,7 @@ public class NsuBackendApplication {
     //1. comments have one level nesting
     //2. fields: body, postId, authorId, parentCommentId, createdAt
     //3. comments are only fetched when page is expanded
+    //4. catch and throw entity not found exception instead of post not found (more general)
 
     //TODO: Add update user details/reset password logic
     //TODO: Set up DB Tables with flyway instead of jpa

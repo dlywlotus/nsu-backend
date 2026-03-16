@@ -1,7 +1,6 @@
 package com.example.nsu_backend.entities;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,7 +22,7 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
+    @Column(nullable = false)
     private String body;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -35,7 +34,7 @@ public class Comment {
     private User author;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_comment_id", nullable = false)
+    @JoinColumn(name = "parent_comment_id")
     private Comment parentComment;
 
     @CreatedDate
