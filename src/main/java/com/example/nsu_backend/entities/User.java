@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,8 +29,10 @@ public class User {
     private String encryptedPassword;
 
     @OneToMany(mappedBy = "author")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<Post> posts;
 
     @OneToMany(mappedBy = "author")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<Comment> comments;
 }
