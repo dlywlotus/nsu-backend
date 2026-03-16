@@ -55,26 +55,25 @@ public class CommentService {
     }
 
     public List<CommentDetails> getCommentsByPost(UUID postId) {
-        HashMap<Comment, List<Comment>> commentHashMap = new HashMap<>();
-        List<Comment> allComments = commentRepository.findByPostId(postId);
-        List<Comment> nestedComments = new ArrayList<>();
-        allComments.forEach(comment -> {
-            if (comment.getParentComment() == null) {
-                commentHashMap.put(comment, new ArrayList<>());
+        HashMap<Long, List<CommentDetails>> idToNestedCommentsMap = new HashMap<>();
+        HashMap<Long, CommentDetails> idToDetailsMap = new HashMap<>();
+        List<CommentDetails> nestedComments = new ArrayList<>();
+        commentRepository.findByPostId(postId).stream().map(commentMapper::commentToCommentDto).forEach(c -> {
+            if (c.parentCommentId() == null) {
+                idToNestedCommentsMap.put(c.id(), new ArrayList<>());
             } else {
-                nestedComments.add(comment);
+                nestedComments.add(c);
             }
+            idToDetailsMap.put(c.id(), c);
         });
-        for (Comment comment : nestedComments) {
-            Comment parentComment = comment.getParentComment();
-            commentHashMap.get(parentComment).add(comment);
-        }
+
+        nestedComments.forEach(c -> idToNestedCommentsMap.get(c.parentCommentId()).add(c));
         List<CommentDetails> res = new ArrayList<>();
-        for (Map.Entry<Comment, List<Comment>> entry : commentHashMap.entrySet()) {
-            List<CommentDetails> nestedCommentsDetails = entry.getValue().stream()
-                    .map(commentMapper::commentToCommentDto).toList();
-            CommentDetails parentCommentDetails = commentMapper.commentToParentCommentDto(entry.getKey(), nestedCommentsDetails);
-            res.add(parentCommentDetails);
+        for (Map.Entry<Long, List<CommentDetails>> entry : idToNestedCommentsMap.entrySet()) {
+            List<CommentDetails> childComments = entry.getValue();
+            CommentDetails parentComment = idToDetailsMap.get(entry.getKey());
+            CommentDetails newParentComment = commentMapper.commentDtoToParentCommentDto(parentComment, childComments);
+            res.add(newParentComment);
         }
 
         return res;
