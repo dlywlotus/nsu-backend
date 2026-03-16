@@ -19,8 +19,5 @@ public class UpdatePostRequest {
     private String category;
 
     @NotNull
-    private UUID authorId;
-
-    @NotNull
     private UUID postId;
 }

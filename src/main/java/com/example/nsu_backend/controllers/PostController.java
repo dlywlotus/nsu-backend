@@ -4,12 +4,10 @@ import com.example.nsu_backend.dto.*;
 import com.example.nsu_backend.enums.Category;
 import com.example.nsu_backend.exceptions.InvalidCategoryException;
 import com.example.nsu_backend.services.PostService;
-import com.example.nsu_backend.utils.AuthUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -20,7 +18,6 @@ import java.util.*;
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
-    private final AuthUtils authUtils;
 
     /**
      * Retrieves all posts that match the provided filters, sorts them and then returns them in page format
@@ -49,27 +46,16 @@ public class PostController {
 
     @PostMapping
     public PostDetails createPost(@Valid @RequestBody AddPostRequest request) {
-        if (!authUtils.getCurrentUserId().equals(request.getAuthorId().toString())) {
-            throw new AuthorizationDeniedException("Can't create a post on behalf of another user.");
-        }
-
         return postService.createPost(request);
     }
 
     @PutMapping
     public PostDetails updatePost(@Valid @RequestBody UpdatePostRequest request) {
-        if (!authUtils.getCurrentUserId().equals(request.getAuthorId().toString())) {
-            throw new AuthorizationDeniedException("Can't update a post on behalf of another user.");
-        }
-
         return postService.updatePost(request);
     }
 
     @DeleteMapping
     public Map<String, String> deletePost(@Valid @RequestBody DeletePostRequest request) {
-        if (!authUtils.getCurrentUserId().equals(request.authorId().toString())) {
-            throw new AuthorizationDeniedException("Can't delete a post on behalf of another user.");
-        }
         postService.deletePost(request);
         return Map.of("message", "Post " + request.postId() + " has been deleted.");
     }
