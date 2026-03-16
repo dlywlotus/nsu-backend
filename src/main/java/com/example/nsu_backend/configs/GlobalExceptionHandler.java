@@ -7,6 +7,7 @@ import com.example.nsu_backend.errorCodes.AuthErrorCode;
 import com.example.nsu_backend.errorCodes.DatabaseErrorCode;
 import com.example.nsu_backend.errorCodes.GeneralErrorCode;
 import com.example.nsu_backend.exceptions.InvalidCategoryException;
+import com.example.nsu_backend.exceptions.NestedCommentException;
 import com.example.nsu_backend.exceptions.TokenRefreshException;
 import com.example.nsu_backend.exceptions.UserLoginException;
 import jakarta.persistence.EntityNotFoundException;
@@ -30,7 +31,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 public class GlobalExceptionHandler {
     // Catches entity not found exceptions
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handlePostNotFound(EntityNotFoundException e) {
+    public ResponseEntity<ApiResponse<Void>> handleEntityNotFound(EntityNotFoundException e) {
         ErrorDetail error = new ErrorDetail(ApiErrorCode.ENTITY_NOT_FOUND.name(), e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiResponse<>(error));
@@ -112,4 +113,13 @@ public class GlobalExceptionHandler {
                 .body(new ApiResponse<>(errors));
 
     }
+
+    //Handles user trying to nest comments more than one level deep
+    @ExceptionHandler(NestedCommentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleExcessiveNesting(NestedCommentException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(new ApiResponse<>(new ErrorDetail(ApiErrorCode.FORBIDDEN.name(), e.getMessage())));
+    }
+
 }

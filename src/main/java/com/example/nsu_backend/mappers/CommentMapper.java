@@ -6,11 +6,21 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
+import java.util.List;
+
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface CommentMapper {
     @Mapping(target = "postId", source = "comment.post.id")
     @Mapping(target = "authorId", source = "comment.author.id")
     @Mapping(target = "parentCommentId", source = "comment.parentComment.id")
+    @Mapping(target = "nestedComments", ignore = true)
     CommentDetails commentToCommentDto(Comment comment);
+
+    @Mapping(target = "postId", source = "comment.post.id")
+    @Mapping(target = "authorId", source = "comment.author.id")
+    @Mapping(target = "parentCommentId", source = "comment.parentComment.id")
+    @Mapping(target = "nestedComments", source = "nestedComments")
+    CommentDetails commentToParentCommentDto(Comment comment, List<CommentDetails> nestedComments);
+
 }
