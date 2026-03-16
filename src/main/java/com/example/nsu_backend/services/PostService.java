@@ -4,11 +4,11 @@ import com.example.nsu_backend.dto.*;
 import com.example.nsu_backend.entities.Post;
 import com.example.nsu_backend.enums.Category;
 import com.example.nsu_backend.exceptions.InvalidCategoryException;
-import com.example.nsu_backend.exceptions.PostNotFoundException;
 import com.example.nsu_backend.mappers.PostMapper;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
 import com.example.nsu_backend.utils.AuthUtils;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -43,7 +43,7 @@ public class PostService {
         }
 
         Post oldPost = postRepository.findById(request.getPostId())
-                .orElseThrow(() -> new PostNotFoundException("The post does not exist"));
+                .orElseThrow(() -> new EntityNotFoundException("The post does not exist"));
         Post post = Post.builder()
                 .id(request.getPostId())
                 .title(Optional.ofNullable(request.getTitle()).orElse(oldPost.getTitle()))
@@ -98,7 +98,7 @@ public class PostService {
 
     public void deletePost(DeletePostRequest request) {
         postRepository.findByPostAndAuthorId(request.postId(), authUtils.getCurrentUserId())
-                .orElseThrow(() -> new PostNotFoundException("The post does not exist"));
+                .orElseThrow(() -> new EntityNotFoundException("The post does not exist"));
         postRepository.deleteById(request.postId());
     }
 }

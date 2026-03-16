@@ -3,6 +3,7 @@ package com.example.nsu_backend.controllers;
 import com.example.nsu_backend.dto.*;
 import com.example.nsu_backend.enums.Category;
 import com.example.nsu_backend.exceptions.InvalidCategoryException;
+import com.example.nsu_backend.services.CommentService;
 import com.example.nsu_backend.services.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
+    public final CommentService commentService;
 
     /**
      * Retrieves all posts that match the provided filters, sorts them and then returns them in page format
@@ -57,6 +59,11 @@ public class PostController {
     @DeleteMapping
     public Map<String, String> deletePost(@Valid @RequestBody DeletePostRequest request) {
         postService.deletePost(request);
-        return Map.of("message", "Post " + request.postId() + " has been deleted.");
+        return Map.of("message", "The post has been deleted successfully!.");
+    }
+
+    @GetMapping("{id}/comments")
+    public List<CommentDetails> getPostComments(@PathVariable UUID id) {
+        return commentService.getCommentsByPost(id);
     }
 }
