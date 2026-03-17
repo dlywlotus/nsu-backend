@@ -1,19 +1,30 @@
 package com.example.nsu_backend.services;
 
-import com.example.nsu_backend.dto.*;
-import com.example.nsu_backend.entities.Post;
-import com.example.nsu_backend.enums.Category;
-import com.example.nsu_backend.exceptions.InvalidCategoryException;
-import com.example.nsu_backend.exceptions.PostNotFoundException;
-import com.example.nsu_backend.mappers.PostMapper;
-import com.example.nsu_backend.repositories.PostRepository;
-import com.example.nsu_backend.repositories.UserRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import com.example.nsu_backend.dto.AddPostRequest;
+import com.example.nsu_backend.dto.DeletePostRequest;
+import com.example.nsu_backend.dto.GetPostRequest;
+import com.example.nsu_backend.dto.PostDetails;
+import com.example.nsu_backend.dto.UpdatePostRequest;
+import com.example.nsu_backend.entities.Post;
+import com.example.nsu_backend.enums.Category;
+import com.example.nsu_backend.exceptions.InvalidCategoryException;
+import com.example.nsu_backend.mappers.PostMapper;
+import com.example.nsu_backend.repositories.PostRepository;
+import com.example.nsu_backend.repositories.UserRepository;
+import com.example.nsu_backend.utils.AuthUtils;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
