@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
@@ -85,11 +86,10 @@ public class PostService {
             sqlBuilder.append(" AND p.author_id = :authorId");
         }
 
-        String[] sortInputs = request.pageable().getSort().toString().split(",")[0].split(":");
-        String sortBy = sortInputs[0].strip();
-        String sortDirection = sortInputs[1].strip();
+        Sort.Order order = request.pageable().getSort().stream().findFirst()
+                .orElse(new Sort.Order(Sort.Direction.DESC, "recent"));
 
-        if (sortBy.equals("recent")) {
+        if (order.getProperty().equals("recent")) {
             sqlBuilder.append(" ORDER BY p.created_at ");
         } else {
             sqlBuilder.append(" ORDER BY p.likes ");
@@ -98,7 +98,9 @@ public class PostService {
         paramMap.put("limit", request.pageable().getPageSize());
         paramMap.put("offset", request.pageable().getOffset());
 
-        sqlBuilder.append(sortDirection).append(" LIMIT :limit OFFSET :offset");
+        log.info(">>>>>> {}", order.getDirection());
+
+        sqlBuilder.append(order.getDirection()).append(" LIMIT :limit OFFSET :offset");
         String sql = sqlBuilder.toString();
 
         return jdbcClient.sql(sql)

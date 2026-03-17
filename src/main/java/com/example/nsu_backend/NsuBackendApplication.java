@@ -10,5 +10,7 @@ public class NsuBackendApplication {
         SpringApplication.run(NsuBackendApplication.class, args);
     }
 
+
+    //TODO: add search vector to db column, fix post query when no sorting is provided
     //TODO: Set up DB Tables with flyway instead of jpa
 }
