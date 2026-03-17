@@ -20,7 +20,9 @@ public class LikeService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final AuthUtils authUtils;
+    private final PostService postService;
 
+    @Transactional
     public void addLike(UUID postId) {
         UUID userId = authUtils.getCurrentUserId();
         Like like = Like.builder()
@@ -28,11 +30,13 @@ public class LikeService {
                 .post(postRepository.getReferenceById(postId))
                 .build();
         likeRepository.save(like);
+        postService.updateLikeCount(postId, true);
     }
 
     @Transactional
     public void removeLike(UUID postId) {
         UUID userId = authUtils.getCurrentUserId();
         likeRepository.deleteByUserIdAndPostId(userId, postId);
+        postService.updateLikeCount(postId, false);
     }
 }

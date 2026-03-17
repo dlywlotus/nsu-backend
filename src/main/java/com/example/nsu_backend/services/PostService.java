@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -92,14 +93,11 @@ public class PostService {
         if (order.getProperty().equals("recent")) {
             sqlBuilder.append(" ORDER BY p.created_at ");
         } else {
-            sqlBuilder.append(" ORDER BY p.likes ");
+            sqlBuilder.append(" ORDER BY p.like_count ");
         }
 
         paramMap.put("limit", request.pageable().getPageSize());
         paramMap.put("offset", request.pageable().getOffset());
-
-        log.info(">>>>>> {}", order.getDirection());
-
         sqlBuilder.append(order.getDirection()).append(" LIMIT :limit OFFSET :offset");
         String sql = sqlBuilder.toString();
 
@@ -112,5 +110,13 @@ public class PostService {
         postRepository.findByPostAndAuthorId(request.postId(), authUtils.getCurrentUserId())
                 .orElseThrow(() -> new EntityNotFoundException("The post does not exist"));
         postRepository.deleteById(request.postId());
+    }
+
+    public void updateLikeCount(UUID postId, boolean isAdd) {
+        if (isAdd) {
+            postRepository.incrementLikeCount(postId);
+        } else {
+            postRepository.decrementLikeCount(postId);
+        }
     }
 }

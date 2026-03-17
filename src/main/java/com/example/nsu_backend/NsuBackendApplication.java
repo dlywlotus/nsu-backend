@@ -11,6 +11,6 @@ public class NsuBackendApplication {
     }
 
 
-    //TODO: add search vector to db column, fix post query when no sorting is provided
+    //TODO: add search vector to db column
     //TODO: Set up DB Tables with flyway instead of jpa
 }
