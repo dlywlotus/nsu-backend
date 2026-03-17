@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-public class UserAuthenticationController {
+public class AuthenticationController {
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
     private final RedisTemplate<String, Object> redisTemplate;

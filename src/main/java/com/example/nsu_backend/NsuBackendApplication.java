@@ -10,7 +10,7 @@ public class NsuBackendApplication {
         SpringApplication.run(NsuBackendApplication.class, args);
     }
 
-    //TODO: Add update user details/reset password logic
+
+    //TODO: add search vector to db column
     //TODO: Set up DB Tables with flyway instead of jpa
-    //TODO: Write unit tests
 }
