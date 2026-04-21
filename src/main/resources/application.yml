@@ -1,10 +1,19 @@
 spring:
   application:
     name: nsu-backend
+  datasource:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      timeout: 5000ms
   jpa:
     hibernate:
       ddl-auto: update
-
-# Rmb to generate a new one when deploying
 jwt:
-  secret_key: 1zYXesEADTwdSWVn5I//DRqStEMuYKrMJNs9rGKk9n4=
+  secret_key: ${JWT_SECRET_KEY}

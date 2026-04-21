@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: nsu-backend
+  datasource:
+    url: jdbc:postgresql://localhost:5434/nsu
+    username: postgres
+    password: 123
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6378
+      password: 123
+      timeout: 5000ms
+  jpa:
+    hibernate:
+      ddl-auto: update
+jwt:
+  secret_key: 1zYXesEADTwdSWVn5I//DRqStEMuYKrMJNs9rGKk9n4=
