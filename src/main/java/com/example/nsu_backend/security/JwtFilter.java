@@ -1,8 +1,6 @@
 package com.example.nsu_backend.security;
 
-import com.example.nsu_backend.dto.ApiResponse;
-import com.example.nsu_backend.dto.ErrorDetail;
-import com.example.nsu_backend.errorCodes.AuthErrorCode;
+import com.example.nsu_backend.dto.GenericError;
 import com.example.nsu_backend.exceptions.AccessTokenException;
 import com.example.nsu_backend.properties.JwtProperties;
 import com.example.nsu_backend.utils.AuthUtils;
@@ -36,6 +34,7 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtProperties jwtProperties;
     private final AuthUtils authUtils;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -68,18 +67,14 @@ public class JwtFilter extends OncePerRequestFilter {
         } catch (ExpiredJwtException | AccessTokenException e) {
             response.setStatus(401);
             response.setContentType("application/json");
-            ErrorDetail errorDetail = new ErrorDetail(
-                    AuthErrorCode.EXPIRED_ACCESS_TOKEN.toString(),
-                    "Access token has expired");
-            String jsonResponseString = new ObjectMapper().writeValueAsString(new ApiResponse<>(errorDetail));
+            GenericError error = new GenericError("Access token has expired");
+            String jsonResponseString = objectMapper.writeValueAsString(error);
             response.getWriter().write(jsonResponseString);
         } catch (JwtException e) {
             response.setStatus(401);
             response.setContentType("application/json");
-            ErrorDetail errorDetail = new ErrorDetail(
-                    AuthErrorCode.INVALID_ACCESS_TOKEN.name(),
-                    "Invalid access token provided");
-            String jsonResponseString = new ObjectMapper().writeValueAsString(new ApiResponse<>(errorDetail));
+            GenericError error = new GenericError("Invalid access token provided");
+            String jsonResponseString = objectMapper.writeValueAsString(error);
             response.getWriter().write(jsonResponseString);
         }
     }
