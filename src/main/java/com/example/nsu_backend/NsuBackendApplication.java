@@ -10,8 +10,7 @@ public class NsuBackendApplication {
         SpringApplication.run(NsuBackendApplication.class, args);
     }
 
-    // TODO: remove the need for device id for authentication.
     // TODO: Add unit and integration tests for auth
-
+    // TODO: Add tests for multi device log
     // TODO: Add MinIO and image store
 }

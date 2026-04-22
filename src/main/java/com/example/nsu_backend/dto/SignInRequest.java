@@ -11,8 +11,5 @@ public record SignInRequest(
 
         @NotNull
         @Size(min = 6, max = 15, message = "Must be between 6 and 15 characters.")
-        String password,
-
-        @NotNull
-        String deviceId) {
+        String password) {
 }
