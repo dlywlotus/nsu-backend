@@ -1,32 +1,20 @@
 package com.example.nsu_backend.services;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.data.domain.Sort;
-import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.stereotype.Service;
-
-import com.example.nsu_backend.dto.AddPostRequest;
-import com.example.nsu_backend.dto.DeletePostRequest;
-import com.example.nsu_backend.dto.GetPostRequest;
-import com.example.nsu_backend.dto.PostDetails;
-import com.example.nsu_backend.dto.UpdatePostRequest;
+import com.example.nsu_backend.dto.*;
 import com.example.nsu_backend.entities.Post;
 import com.example.nsu_backend.enums.Category;
 import com.example.nsu_backend.exceptions.InvalidCategoryException;
 import com.example.nsu_backend.mappers.PostMapper;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
-import com.example.nsu_backend.utils.AuthUtils;
-
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Slf4j
 @Service
@@ -36,14 +24,14 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostMapper postMapper;
     private final JdbcClient jdbcClient;
-    private final AuthUtils authUtils;
+    private final AuthService authService;
 
     public PostDetails createPost(AddPostRequest request) {
         if (Arrays.stream(Category.values()).noneMatch(c -> c.toString().equals(request.getCategory()))) {
             throw new InvalidCategoryException("The provided category must be one of: " + Arrays.toString(Category.values()));
         }
 
-        Post post = postMapper.addPostDtoToNewPost(request, userRepository.getReferenceById(authUtils.getCurrentUserId()));
+        Post post = postMapper.addPostDtoToNewPost(request, userRepository.getReferenceById(authService.getCurrentUserId()));
         Post newPost = postRepository.save(post);
         return postMapper.postToPostDto(newPost);
     }
@@ -61,7 +49,7 @@ public class PostService {
                 .title(Optional.ofNullable(request.getTitle()).orElse(oldPost.getTitle()))
                 .body(Optional.ofNullable(request.getBody()).orElse(oldPost.getBody()))
                 .category(Optional.ofNullable(request.getCategory()).orElse(oldPost.getCategory()))
-                .author(userRepository.getReferenceById(authUtils.getCurrentUserId()))
+                .author(userRepository.getReferenceById(authService.getCurrentUserId()))
                 .createdAt(oldPost.getCreatedAt())
                 .build();
         Post newPost = postRepository.save(post);
@@ -107,7 +95,7 @@ public class PostService {
     }
 
     public void deletePost(DeletePostRequest request) {
-        postRepository.findByPostAndAuthorId(request.postId(), authUtils.getCurrentUserId())
+        postRepository.findByPostAndAuthorId(request.postId(), authService.getCurrentUserId())
                 .orElseThrow(() -> new EntityNotFoundException("The post does not exist"));
         postRepository.deleteById(request.postId());
     }

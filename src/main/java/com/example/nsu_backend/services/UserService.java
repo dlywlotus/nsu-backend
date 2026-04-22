@@ -1,27 +1,25 @@
 package com.example.nsu_backend.services;
 
-import java.util.Optional;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
 import com.example.nsu_backend.dto.SignUpRequest;
 import com.example.nsu_backend.dto.UpdateProfileRequest;
 import com.example.nsu_backend.dto.UserDetails;
 import com.example.nsu_backend.entities.User;
+import com.example.nsu_backend.exceptions.ApiException;
 import com.example.nsu_backend.exceptions.UserLoginException;
 import com.example.nsu_backend.mappers.UserMapper;
 import com.example.nsu_backend.repositories.UserRepository;
-import com.example.nsu_backend.utils.AuthUtils;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AuthUtils authUtils;
+    private final AuthService authService;
     private final UserMapper userMapper;
 
     public Optional<User> getUserByUsername(String username) {
@@ -29,6 +27,10 @@ public class UserService {
     }
 
     public void saveUser(SignUpRequest request) {
+        getUserByUsername(request.username()).ifPresent(user -> {
+            throw new ApiException("Account with the specified username already exists");
+        });
+
         User user = User.builder()
                 .username(request.username())
                 .encryptedPassword(passwordEncoder.encode(request.password()))
@@ -37,7 +39,7 @@ public class UserService {
     }
 
     public UserDetails updateProfile(UpdateProfileRequest request) {
-        User user = userRepository.findById(authUtils.getCurrentUserId())
+        User user = userRepository.findById(authService.getCurrentUserId())
                 .orElseThrow(() -> new UserLoginException("Please log in first!"));
         User updatedUser = User.builder()
                 .id(user.getId())

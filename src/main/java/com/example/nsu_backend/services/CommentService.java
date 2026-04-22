@@ -8,7 +8,6 @@ import com.example.nsu_backend.mappers.CommentMapper;
 import com.example.nsu_backend.repositories.CommentRepository;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
-import com.example.nsu_backend.utils.AuthUtils;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentMapper commentMapper;
-    private final AuthUtils authUtils;
+    private final AuthService authService;
 
     public CommentDetails addComment(AddCommentRequest request) {
         if (request.parentCommentId() != null) {
@@ -49,7 +48,7 @@ public class CommentService {
     }
 
     public void deleteComment(Long id) {
-        commentRepository.findByIdAndAuthorId(id, authUtils.getCurrentUserId())
+        commentRepository.findByIdAndAuthorId(id, authService.getCurrentUserId())
                 .orElseThrow(() -> new EntityNotFoundException("No comment found with the specified id"));
         commentRepository.deleteById(id);
     }

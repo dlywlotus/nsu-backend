@@ -3,7 +3,7 @@ package com.example.nsu_backend.security;
 import com.example.nsu_backend.dto.GenericError;
 import com.example.nsu_backend.exceptions.AccessTokenException;
 import com.example.nsu_backend.properties.JwtProperties;
-import com.example.nsu_backend.utils.AuthUtils;
+import com.example.nsu_backend.services.AuthService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -25,14 +25,15 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import static com.example.nsu_backend.utils.AuthUtils.ACCESS_TOKEN_VERSION_PREFIX;
+import static com.example.nsu_backend.services.AuthService.ACCESS_TOKEN_VERSION_PREFIX;
+import static com.example.nsu_backend.services.AuthService.BLACK_LISTED_TOKEN_PREFIX;
 
 @Slf4j
 @RequiredArgsConstructor
 @Component
 public class JwtFilter extends OncePerRequestFilter {
     private final JwtProperties jwtProperties;
-    private final AuthUtils authUtils;
+    private final AuthService authService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -45,16 +46,15 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         try {
-            String jws = authUtils.removeBearerPrefix(token);
+            String jws = authService.removeBearerPrefix(token);
             Claims payload = Jwts.parser().verifyWith(jwtProperties.getDecodedSecretKey())
                     .build().parseSignedClaims(jws).getPayload();
             Object userId = payload.get("userId");
             Object accessTokenVersion = payload.get("version");
             Integer globalAccessTokenVersion = (Integer) Optional.ofNullable(
                     redisTemplate.opsForValue().get(ACCESS_TOKEN_VERSION_PREFIX + userId.toString())).orElse(1);
-
             //If access token is blacklisted or has an outdated version
-            if (redisTemplate.hasKey("blackListedAccessToken:" + jws) ||
+            if (redisTemplate.hasKey(BLACK_LISTED_TOKEN_PREFIX + jws) ||
                     (Integer) accessTokenVersion < globalAccessTokenVersion) {
                 throw new AccessTokenException("");
             }

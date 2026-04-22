@@ -1,30 +1,23 @@
 package com.example.nsu_backend.controllers;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.example.nsu_backend.dto.LogoutRequest;
 import com.example.nsu_backend.dto.SignInRequest;
 import com.example.nsu_backend.dto.SignUpRequest;
-import com.example.nsu_backend.dto.TokenRefreshRequest;
 import com.example.nsu_backend.dto.UserAuthResponse;
 import com.example.nsu_backend.entities.User;
 import com.example.nsu_backend.exceptions.TokenRefreshException;
 import com.example.nsu_backend.exceptions.UserLoginException;
+import com.example.nsu_backend.services.AuthService;
 import com.example.nsu_backend.services.UserService;
-import com.example.nsu_backend.utils.AuthUtils;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -32,17 +25,18 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthenticationController {
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
-    private final RedisTemplate<String, Object> redisTemplate;
-    private final AuthUtils authUtils;
+    private final AuthService authService;
 
     @PostMapping("/sign_up")
     public Map<String, String> signUp(@Valid @RequestBody SignUpRequest request) {
         userService.saveUser(request);
+        log.info(">>>>>>>>>>>>>>>>>>>> Sign up method called");
         return Map.of("message", "User has signed up successfully");
     }
 
     @PostMapping("/sign_in")
-    public UserAuthResponse signIn(@Valid @RequestBody SignInRequest request) {
+    public ResponseEntity<UserAuthResponse> signIn(@Valid @RequestBody SignInRequest request,
+                                                   @CookieValue(name = "refresh_token", defaultValue = "") String refreshToken) {
         User user = userService.getUserByUsername(request.username())
                 .orElseThrow(() -> new UserLoginException("User does not exist"));
 
@@ -50,37 +44,50 @@ public class AuthenticationController {
             throw new UserLoginException("Invalid username or password");
         }
 
-        authUtils.invalidateOldRefreshToken(user.getId(), request.deviceId());
-        return new UserAuthResponse(authUtils.createJwtTokens(user.getId(), request.deviceId()), user.getId());
+        authService.invalidateRefreshToken(refreshToken);
+        ResponseCookie newRefreshTokenCookie = authService.createRefreshTokenCookie(user.getId().toString());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, newRefreshTokenCookie.toString())
+                .body(new UserAuthResponse(authService.createAccessToken(user.getId().toString())));
     }
 
     @PostMapping("/sign_out")
-    public Map<String, String> signOut(@RequestHeader("Authorization") String authorizationHeader, @Valid @RequestBody LogoutRequest request) {
-        //Blacklist existing access token
-        String jws = authUtils.removeBearerPrefix(authorizationHeader);
-        redisTemplate.opsForValue().set("blackListedAccessToken:" + jws, 0);
-        redisTemplate.expire("blackListedAccessToken:" + jws, 15, TimeUnit.MINUTES);
+    public Map<String, String> signOut(@RequestHeader("Authorization") String authorizationHeader,
+                                       @CookieValue(name = "refresh_token", defaultValue = "") String refreshToken) {
+        // Blacklist existing access token
+        String accessToken = authService.removeBearerPrefix(authorizationHeader);
+        authService.blacklistAccessToken(accessToken);
 
-        authUtils.invalidateOldRefreshToken(request.userId(), request.deviceId());
+        authService.invalidateRefreshToken(refreshToken);
         return Map.of("message", "Successfully logged out");
     }
 
     @PostMapping("/refresh_token")
-    public UserAuthResponse refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
-
-        if (!redisTemplate.hasKey(request.refreshTokenString())) {
-            throw new TokenRefreshException("Refresh token has expired");
+    public ResponseEntity<UserAuthResponse> refreshToken(@CookieValue(name = "refresh_token", defaultValue = "") String refreshToken) {
+        if (refreshToken.isEmpty() || !authService.has(refreshToken)) {
+            throw new TokenRefreshException("Refresh token is invalid or has expired");
         }
 
-        if (Objects.equals(redisTemplate.opsForHash().get(request.refreshTokenString(), "isRevoked"), "true")) {
+        if (authService.isRevoked(refreshToken)) {
             log.error("MALICIOUS REFRESH TOKEN USAGE DETECTED");
-            authUtils.invalidateAllAccessTokens(request.userId());
-            authUtils.invalidateAllRefreshTokens(request.userId());
+            authService.invalidateAllAccessTokens(authService.getUserIdFrom(refreshToken));
+
+            // Refresh tokens are deleted here, NOT INVALIDATED, to prevent a malicious user from spamming the route, disconnecting the user repeatedly
+            authService.deleteAllRefreshTokens(authService.getUserIdFrom(refreshToken));
             throw new TokenRefreshException("Refresh token has expired");
         }
 
-        //Invalidate old refresh token then create new access and refresh tokens
-        redisTemplate.opsForHash().put(request.refreshTokenString(), "isRevoked", "true");
-        return new UserAuthResponse(authUtils.createJwtTokens(request.userId(), request.deviceId()), request.userId());
+        authService.invalidateRefreshToken(refreshToken);
+        ResponseCookie newRefreshTokenCookie = authService.createRefreshTokenCookie(authService.getUserIdFrom(refreshToken));
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, newRefreshTokenCookie.toString())
+                .body(new UserAuthResponse(authService.createAccessToken(authService.getUserIdFrom(refreshToken))));
+    }
+
+    @GetMapping("/test_secure")
+    public String testSecureRoute() {
+        return "Successfully accessed secure route";
     }
 }
