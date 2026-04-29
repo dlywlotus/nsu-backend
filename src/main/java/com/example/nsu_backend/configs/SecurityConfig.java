@@ -25,7 +25,7 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(requests ->
-                        requests.requestMatchers("/sign_in", "/sign_up", "/error", "/refresh_token").permitAll()
+                        requests.requestMatchers("/sign_in", "/sign_up", "/error", "/refresh_token", "/api-docs/**", "/swagger-ui/**").permitAll()
                                 .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, AuthorizationFilter.class)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(entryPoint))

@@ -17,3 +17,6 @@ spring:
       ddl-auto: update
 jwt:
   secret_key: ${JWT_SECRET_KEY}
+springdoc:
+  api-docs:
+    path: /api-docs
