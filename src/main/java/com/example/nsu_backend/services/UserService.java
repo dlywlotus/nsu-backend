@@ -49,5 +49,4 @@ public class UserService {
                 .build();
         return userMapper.userToUserDto(userRepository.save(updatedUser));
     }
-
 }

@@ -10,7 +10,5 @@ public class NsuBackendApplication {
         SpringApplication.run(NsuBackendApplication.class, args);
     }
 
-    // TODO: Add unit and integration tests for auth
-    // TODO: Add tests for multi device log
     // TODO: Add MinIO and image store
 }
