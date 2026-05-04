@@ -30,7 +30,6 @@ public class AuthenticationController {
     @PostMapping("/sign_up")
     public Map<String, String> signUp(@Valid @RequestBody SignUpRequest request) {
         userService.saveUser(request);
-        log.info(">>>>>>>>>>>>>>>>>>>> Sign up method called");
         return Map.of("message", "User has signed up successfully");
     }
 

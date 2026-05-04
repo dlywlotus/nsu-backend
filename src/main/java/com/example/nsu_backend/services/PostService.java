@@ -1,8 +1,12 @@
 package com.example.nsu_backend.services;
 
-import com.example.nsu_backend.dto.*;
+import com.example.nsu_backend.dto.AddPostRequest;
+import com.example.nsu_backend.dto.GetPostRequest;
+import com.example.nsu_backend.dto.PostDetails;
+import com.example.nsu_backend.dto.UpdatePostRequest;
 import com.example.nsu_backend.entities.Post;
 import com.example.nsu_backend.enums.Category;
+import com.example.nsu_backend.exceptions.ApiException;
 import com.example.nsu_backend.exceptions.InvalidCategoryException;
 import com.example.nsu_backend.mappers.PostMapper;
 import com.example.nsu_backend.repositories.PostRepository;
@@ -25,6 +29,10 @@ public class PostService {
     private final PostMapper postMapper;
     private final JdbcClient jdbcClient;
     private final AuthService authService;
+
+    public PostDetails getPost(UUID postId) {
+        return postRepository.findById(postId).map(postMapper::postToPostDto).orElseThrow(() -> new ApiException("Post not found"));
+    }
 
     public PostDetails createPost(AddPostRequest request) {
         if (Arrays.stream(Category.values()).noneMatch(c -> c.toString().equals(request.getCategory()))) {
@@ -76,9 +84,9 @@ public class PostService {
         }
 
         Sort.Order order = request.pageable().getSort().stream().findFirst()
-                .orElse(new Sort.Order(Sort.Direction.DESC, "recent"));
+                .orElse(new Sort.Order(Sort.Direction.DESC, "created_at"));
 
-        if (order.getProperty().equals("recent")) {
+        if (order.getProperty().equals("created_at")) {
             sqlBuilder.append(" ORDER BY p.created_at ");
         } else {
             sqlBuilder.append(" ORDER BY p.like_count ");
@@ -94,10 +102,10 @@ public class PostService {
                 .query(PostDetails.class).list();
     }
 
-    public void deletePost(DeletePostRequest request) {
-        postRepository.findByPostAndAuthorId(request.postId(), authService.getCurrentUserId())
+    public void deletePost(UUID postId) {
+        postRepository.findByPostAndAuthorId(postId, authService.getCurrentUserId())
                 .orElseThrow(() -> new EntityNotFoundException("The post does not exist"));
-        postRepository.deleteById(request.postId());
+        postRepository.deleteById(postId);
     }
 
     public void updateLikeCount(UUID postId, boolean isAdd) {

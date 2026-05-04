@@ -1,16 +1,16 @@
 package com.example.nsu_backend.dto;
 
-import java.util.UUID;
-
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+
+import java.util.UUID;
 
 @Getter
 @Setter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class UpdatePostRequest {
     @Size(max = 250, message = "Post title must be at at most 250 characters.")
     private String title;
@@ -19,8 +19,6 @@ public class UpdatePostRequest {
     private String body;
 
     private String category;
-
-    private int likeCount;
 
     @NotNull
     private UUID postId;

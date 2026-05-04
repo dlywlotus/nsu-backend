@@ -96,7 +96,4 @@ class AuthIT {
         // Refresh token of the second device is still valid
         client.post().uri("/refresh_token").cookie("refresh_token", secondDeviceRefreshToken).exchangeSuccessfully();
     }
-
-    // Malformed / garbage tokens
-
 }

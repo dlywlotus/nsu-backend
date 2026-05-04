@@ -1,14 +1,13 @@
 package com.example.nsu_backend.repositories;
 
-import java.util.Optional;
-import java.util.UUID;
-
+import com.example.nsu_backend.entities.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import com.example.nsu_backend.entities.Post;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, UUID> {
@@ -23,5 +22,4 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Modifying
     @Query("UPDATE Post p SET p.likeCount = p.likeCount + 1 WHERE p.id = :postId")
     void incrementLikeCount(UUID postId);
-
 }
