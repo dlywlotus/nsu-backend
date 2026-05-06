@@ -31,11 +31,6 @@ comments with one-level nesting, and a like system.
 docker compose up -d
 ```
 
-This starts:
-
-- PostgreSQL on port **5434** (db: `nsu`, user: `postgres`, password: `123`)
-- Redis on port **6378** (password: `123`)
-
 ### 2. Initialize full-text search
 
 Run the SQL in `src/main/resources/init.sql` against the database once after the `posts` table is created by Hibernate:
@@ -104,12 +99,12 @@ MapStruct mappers sit between controllers/services and entities, converting betw
 
 ### users
 
-| Column             | Type    | Constraints        |
-|--------------------|---------|--------------------|
-| id                 | UUID    | PK, auto-generated |
-| username           | VARCHAR | UNIQUE             |
-| encrypted_password | VARCHAR | NOT NULL           |
-| profile_icon_url   | VARCHAR | nullable           |
+| Column                 | Type    | Constraints        |
+|------------------------|---------|--------------------|
+| id                     | UUID    | PK, auto-generated |
+| username               | VARCHAR | UNIQUE             |
+| encrypted_password     | VARCHAR | NOT NULL           |
+| profile_icon_image_key | VARCHAR | nullable           |
 
 ### posts
 
@@ -213,9 +208,10 @@ Like operations are transactional — the `like_count` on the post is updated at
 
 ### User Profile
 
-| Method | Path    | Body                   | Response      |
-|--------|---------|------------------------|---------------|
-| POST   | `/user` | `UpdateProfileRequest` | `UserDetails` |
+| Method | Path                 | Body                    | Response      |
+|--------|----------------------|-------------------------|---------------|
+| POST   | `/user/name`         | `UpdateUsernameRequest` | `UserDetails` |
+| POST   | `/user/profile-icon` | —                       | `UserDetails` |
 
 ---
 
@@ -282,12 +278,10 @@ Queries use `to_tsquery('english', :searchInput)` with the `@@` operator.
 # Unit tests only
 ./mvnw test
 
-# Integration tests (requires running PostgreSQL + Redis)
+# Integration tests
+docker compose up -d
 ./mvnw verify
 ```
-
-Integration tests use the `local` profile and require Docker services to be running. `AuthIT` flushes Redis before each
-test. `PostIT` truncates the `posts` and `users` tables before each test.
 
 The Maven Failsafe plugin is configured to pick up `*IT.java` files for integration tests.
 
@@ -300,30 +294,6 @@ The Maven Failsafe plugin is configured to pick up `*IT.java` files for integrat
 - MapStruct `Mappers.getMapper()` as `@Spy` in unit tests
 
 ---
-
-## Configuration Reference
-
-### application.yml (Production)
-
-Uses environment variables for all sensitive values:
-
-| Property                     | Env Variable        | Description                 |
-|------------------------------|---------------------|-----------------------------|
-| `spring.datasource.url`      | `POSTGRES_URL`      | JDBC connection string      |
-| `spring.datasource.username` | `POSTGRES_USERNAME` | DB username                 |
-| `spring.datasource.password` | `POSTGRES_PASSWORD` | DB password                 |
-| `spring.data.redis.host`     | `REDIS_HOST`        | Redis hostname              |
-| `spring.data.redis.port`     | `REDIS_PORT`        | Redis port                  |
-| `spring.data.redis.password` | `REDIS_PASSWORD`    | Redis password              |
-| `jwt.secret_key`             | `JWT_SECRET_KEY`    | Base64-encoded HMAC-SHA key |
-
-### application-local.yml (Local Development)
-
-Hardcoded values matching the Docker Compose setup:
-
-- PostgreSQL: `localhost:5434`, user `postgres`, password `123`
-- Redis: `localhost:6378`, password `123`
-- JWT secret: Pre-configured Base64 key
 
 ### Hibernate DDL
 

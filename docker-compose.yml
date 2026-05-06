@@ -18,6 +18,22 @@ services:
     volumes:
       - redis-data:/data
     command: redis-server --requirepass 123
+  rust-fs:
+    container_name: rust-fs
+    image: rustfs/rustfs:latest
+    environment:
+      - RUSTFS_ACCESS_KEY=admin
+      - RUSTFS_SECRET_KEY=123
+      - RUSTFS_SERVER_DOMAINS=localhost
+      - RUSTFS_CONSOLE_ENABLE=true
+
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - rust-fs-data:/data
+
 volumes:
   db-data:
   redis-data:
+  rust-fs-data:
