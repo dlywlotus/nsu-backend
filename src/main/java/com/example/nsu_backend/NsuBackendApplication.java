@@ -9,6 +9,4 @@ public class NsuBackendApplication {
     public static void main(String[] args) {
         SpringApplication.run(NsuBackendApplication.class, args);
     }
-
-    // TODO: Add MinIO and image store
 }

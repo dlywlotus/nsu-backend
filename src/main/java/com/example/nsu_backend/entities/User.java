@@ -1,10 +1,7 @@
 package com.example.nsu_backend.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.UUID;
 
@@ -14,6 +11,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Setter
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -22,8 +20,7 @@ public class User {
     @Column(unique = true)
     private String username;
 
-    @Column(name = "profile_icon_url")
-    private String profileIconUrl;
+    private String profileIconImageKey;
 
     @Column(nullable = false)
     private String encryptedPassword;

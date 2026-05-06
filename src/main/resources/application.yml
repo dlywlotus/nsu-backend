@@ -17,6 +17,10 @@ spring:
       ddl-auto: update
 jwt:
   secret_key: ${JWT_SECRET_KEY}
+rust-fs:
+  uri: ${RUST_FS_URI}
+  access_key: ${RUST_FS_ACCESS_KEY}
+  secret_key: ${RUST_FS_SECRET_KEY}
 springdoc:
   api-docs:
     path: /api-docs
