@@ -12,11 +12,10 @@ spring:
       port: 6378
       password: 123
       timeout: 5000ms
-  jpa:
-    hibernate:
-      ddl-auto: update
+
 jwt:
   secret_key: 1zYXesEADTwdSWVn5I//DRqStEMuYKrMJNs9rGKk9n4=
+
 rust-fs:
   uri: http://localhost:9000
   access_key: admin

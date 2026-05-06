@@ -1,26 +1,37 @@
 spring:
   application:
     name: nsu-backend
+
   datasource:
     url: ${POSTGRES_URL}
     username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
   data:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
       timeout: 5000ms
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
+    show-sql: true
+
+  flyway:
+    enabled: true
+    locations: db/migration
+
 jwt:
   secret_key: ${JWT_SECRET_KEY}
+
 rust-fs:
   uri: ${RUST_FS_URI}
   access_key: ${RUST_FS_ACCESS_KEY}
   secret_key: ${RUST_FS_SECRET_KEY}
+
 springdoc:
   api-docs:
     path: /api-docs
