@@ -1,16 +1,28 @@
 package com.example.nsu_backend.services;
 
+import com.example.nsu_backend.dto.GenericError;
+import com.example.nsu_backend.exceptions.AccessTokenException;
 import com.example.nsu_backend.exceptions.ApiException;
 import com.example.nsu_backend.properties.JwtProperties;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -26,6 +38,49 @@ public class AuthService {
     public final static String BLACK_LISTED_TOKEN_PREFIX = "blackListedAccessToken:";
     private final RedisTemplate<String, Object> redisTemplate;
     private final JwtProperties jwtProperties;
+    private final ObjectMapper objectMapper;
+
+    public void extractAndValidateJwt(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String token = request.getHeader("Authorization");
+        if (token == null || !token.startsWith("Bearer")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        try {
+            String jws = removeBearerPrefix(token);
+            Claims payload = Jwts.parser().verifyWith(jwtProperties.getDecodedSecretKey())
+                    .build().parseSignedClaims(jws).getPayload();
+            Object userId = payload.get("userId");
+            Object accessTokenVersion = payload.get("version");
+            Integer globalAccessTokenVersion = (Integer) Optional.ofNullable(
+                    redisTemplate.opsForValue().get(ACCESS_TOKEN_VERSION_PREFIX + userId.toString())).orElse(1);
+
+            //If access token is blacklisted or has an outdated version
+            if (redisTemplate.hasKey(BLACK_LISTED_TOKEN_PREFIX + jws) ||
+                    (Integer) accessTokenVersion < globalAccessTokenVersion) {
+                throw new AccessTokenException("");
+            }
+
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(userId, null, List.of());
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            filterChain.doFilter(request, response);
+
+        } catch (ExpiredJwtException | AccessTokenException e) {
+            response.setStatus(401);
+            response.setContentType("application/json");
+            GenericError error = new GenericError("Access token has expired");
+            String jsonResponseString = objectMapper.writeValueAsString(error);
+            response.getWriter().write(jsonResponseString);
+        } catch (JwtException e) {
+            response.setStatus(401);
+            response.setContentType("application/json");
+            GenericError error = new GenericError("Invalid access token provided");
+            String jsonResponseString = objectMapper.writeValueAsString(error);
+            response.getWriter().write(jsonResponseString);
+        }
+    }
 
     public String createAccessToken(String userId) {
         Instant expirationInstant = Instant.now().plus(15, ChronoUnit.MINUTES);

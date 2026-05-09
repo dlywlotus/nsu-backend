@@ -13,3 +13,5 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 }
+
+// TODO: Add better error format for validations and uuid parsing
