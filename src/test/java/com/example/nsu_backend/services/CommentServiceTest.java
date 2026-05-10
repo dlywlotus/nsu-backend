@@ -1,4 +1,4 @@
-package com.example.nsu_backend;
+package com.example.nsu_backend.services;
 
 import com.example.nsu_backend.dto.AddCommentRequest;
 import com.example.nsu_backend.dto.CommentDetails;
@@ -10,7 +10,6 @@ import com.example.nsu_backend.mappers.CommentMapper;
 import com.example.nsu_backend.repositories.CommentRepository;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
-import com.example.nsu_backend.services.CommentService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

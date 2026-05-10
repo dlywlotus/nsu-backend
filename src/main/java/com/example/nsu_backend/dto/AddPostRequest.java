@@ -10,12 +10,12 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class AddPostRequest {
-    @NotBlank(message = "A post title is required.")
-    @Size(max = 250, message = "Post title must be at at most 250 characters.")
+    @NotBlank
+    @Size(max = 250, message = "must be at at most 250 characters")
     private String title;
 
-    @NotBlank(message = "A post body is required.")
-    @Size(max = 1000, message = "Post title must be at at most 1000 characters.")
+    @NotBlank
+    @Size(max = 1000, message = "must be at at most 1000 characters")
     private String body;
 
     private String category;
