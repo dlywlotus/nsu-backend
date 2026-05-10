@@ -1,31 +1,45 @@
 package com.example.nsu_backend.controllers;
 
-import com.example.nsu_backend.dto.*;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.nsu_backend.dto.AddPostRequest;
+import com.example.nsu_backend.dto.CommentDetails;
+import com.example.nsu_backend.dto.GetPostRequest;
+import com.example.nsu_backend.dto.PostDetails;
+import com.example.nsu_backend.dto.UpdatePostRequest;
 import com.example.nsu_backend.enums.Category;
-import com.example.nsu_backend.exceptions.InvalidCategoryException;
 import com.example.nsu_backend.services.CommentService;
 import com.example.nsu_backend.services.PostService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.*;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 public class PostController {
-    private final PostService postService;
     public final CommentService commentService;
+    private final PostService postService;
 
     /**
      * Retrieves all posts that match the provided filters, sorts them and then returns them in page format
      * The page, size and sort query params are converted to pageable by spring automatically
      * Only the first "sort" variable will be considered. The default sort is by "created_at" in descending order.
      * By default, no category filters are applied, with page = 0 and size = 20.
-     * Example usage: /posts?category=HOUSING&page=0&size=20&sort=created_at,desc
+     * Example usage: /posts?category=HOUSING&page=0&size=20&sort=createdAt,desc
      *
      * @param category    used to filter posts by category
      * @param searchInput used to filer posts by search input
@@ -34,15 +48,10 @@ public class PostController {
      * @return a list of posts that is filtered and sorted according to the inputs
      */
     @GetMapping("posts")
-    public List<PostDetails> getPosts(@RequestParam(required = false) String category,
+    public List<PostDetails> getPosts(@RequestParam(required = false) Category category,
                                       @RequestParam(required = false) String searchInput,
                                       @RequestParam(required = false) UUID authorId,
                                       Pageable pageable) {
-
-        if (!Objects.isNull(category) && Arrays.stream(Category.values()).noneMatch(c -> c.toString().equals(category))) {
-            throw new InvalidCategoryException("The provided category must be one of: " + Arrays.toString(Category.values()));
-        }
-
         return postService.getPosts(new GetPostRequest(category, searchInput, authorId, pageable));
     }
 

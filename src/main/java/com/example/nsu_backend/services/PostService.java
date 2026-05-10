@@ -1,24 +1,28 @@
 package com.example.nsu_backend.services;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Service;
+
 import com.example.nsu_backend.dto.AddPostRequest;
 import com.example.nsu_backend.dto.GetPostRequest;
 import com.example.nsu_backend.dto.PostDetails;
 import com.example.nsu_backend.dto.UpdatePostRequest;
 import com.example.nsu_backend.entities.Post;
-import com.example.nsu_backend.enums.Category;
 import com.example.nsu_backend.exceptions.ApiException;
-import com.example.nsu_backend.exceptions.InvalidCategoryException;
 import com.example.nsu_backend.mappers.PostMapper;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Sort;
-import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 @Slf4j
 @Service
@@ -35,21 +39,17 @@ public class PostService {
     }
 
     public PostDetails createPost(AddPostRequest request) {
-        if (Arrays.stream(Category.values()).noneMatch(c -> c.toString().equals(request.getCategory()))) {
-            throw new InvalidCategoryException("The provided category must be one of: " + Arrays.toString(Category.values()));
-        }
-
-        Post post = postMapper.addPostDtoToNewPost(request, userRepository.getReferenceById(authService.getCurrentUserId()));
+        Post post = Post.builder()
+                .title(request.getTitle())
+                .body(request.getBody())
+                .category(request.getCategory())
+                .likeCount(0)
+                .author(userRepository.getReferenceById(authService.getCurrentUserId())).build();
         Post newPost = postRepository.save(post);
         return postMapper.postToPostDto(newPost);
     }
 
     public PostDetails updatePost(UpdatePostRequest request) {
-        if (Objects.nonNull(request.getCategory()) &&
-                Arrays.stream(Category.values()).noneMatch(c -> c.toString().equals(request.getCategory()))) {
-            throw new InvalidCategoryException("The provided category must be one of: " + Arrays.toString(Category.values()));
-        }
-
         Post oldPost = postRepository.findById(request.getPostId())
                 .orElseThrow(() -> new EntityNotFoundException("The post does not exist"));
         Post post = Post.builder()
@@ -69,7 +69,7 @@ public class PostService {
         StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM posts p WHERE p.id IS NOT NULL");
 
         if (!Objects.isNull(request.category())) {
-            paramMap.put("category", request.category());
+            paramMap.put("category", request.category().name());
             sqlBuilder.append(" AND p.category = :category");
         }
 
@@ -84,9 +84,9 @@ public class PostService {
         }
 
         Sort.Order order = request.pageable().getSort().stream().findFirst()
-                .orElse(new Sort.Order(Sort.Direction.DESC, "created_at"));
+                .orElse(new Sort.Order(Sort.Direction.DESC, "createdAt"));
 
-        if (order.getProperty().equals("created_at")) {
+        if (order.getProperty().equals("createdAt")) {
             sqlBuilder.append(" ORDER BY p.created_at ");
         } else {
             sqlBuilder.append(" ORDER BY p.like_count ");

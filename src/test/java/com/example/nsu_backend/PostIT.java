@@ -1,7 +1,12 @@
 package com.example.nsu_backend;
 
-import com.example.nsu_backend.dto.*;
-import lombok.extern.slf4j.Slf4j;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +17,15 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import java.util.List;
+import com.example.nsu_backend.dto.AddPostRequest;
+import com.example.nsu_backend.dto.PostDetails;
+import com.example.nsu_backend.dto.SignInRequest;
+import com.example.nsu_backend.dto.SignUpRequest;
+import com.example.nsu_backend.dto.UpdatePostRequest;
+import com.example.nsu_backend.dto.UserAuthResponse;
+import com.example.nsu_backend.enums.Category;
 
-import static org.junit.jupiter.api.Assertions.*;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ActiveProfiles("local")
@@ -51,7 +62,7 @@ public class PostIT {
         // Create post
         PostDetails postDetails = client.post().uri("/post")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .bodyValue(new AddPostRequest("First post", "Post body", "EVENTS")).exchange()
+                .bodyValue(new AddPostRequest("First post", "Post body", Category.EVENTS)).exchangeSuccessfully()
                 .expectBody(PostDetails.class).returnResult().getResponseBody();
         assertNotNull(postDetails);
         List<PostDetails> checkInsertRes = jdbcClient
@@ -63,7 +74,7 @@ public class PostIT {
 
         // Update post
         UpdatePostRequest request = UpdatePostRequest.builder()
-                .postId(postDetails.id()).category("HOUSING").build();
+                .postId(postDetails.id()).category(Category.HOUSING).build();
         client.put().uri("/post").header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                 .bodyValue(request).exchangeSuccessfully();
 
@@ -84,24 +95,16 @@ public class PostIT {
     }
 
     @Test
-    public void givenInvalidCategory_whenCreatePost_throwException() {
-        client.post().uri("/post")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .bodyValue(new AddPostRequest("First post", "Post body", "INVALID_EVENT"))
-                .exchange().expectStatus().is4xxClientError();
-    }
-
-    @Test
     public void givenFilters_whenRetrievePosts_postsFiltered() {
         // Create posts
         PostDetails postOne = client.post().uri("/post")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .bodyValue(new AddPostRequest("First post", "Content by Alice", "EVENTS")).exchange()
+                .bodyValue(new AddPostRequest("First post", "Content by Alice", Category.EVENTS)).exchange()
                 .expectBody(PostDetails.class).returnResult().getResponseBody();
         assertNotNull(postOne);
         PostDetails postTwo = client.post().uri("/post")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .bodyValue(new AddPostRequest("Second post", "Content by Bob", "HOUSING")).exchange()
+                .bodyValue(new AddPostRequest("Second post", "Content by Bob", Category.HOUSING)).exchange()
                 .expectBody(PostDetails.class).returnResult().getResponseBody();
         assertNotNull(postTwo);
 
@@ -138,7 +141,7 @@ public class PostIT {
         assertNotNull(filterBySearchAndCategory);
         assertTrue(filterBySearchAndCategory.isEmpty());
 
-        List<PostDetails> sortByRecentAscending = client.get().uri("/posts?sort=created_at,asc")
+        List<PostDetails> sortByRecentAscending = client.get().uri("/posts?sort=createdAt,asc")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).exchangeSuccessfully()
                 .expectBodyList(PostDetails.class).returnResult().getResponseBody();
         assertNotNull(sortByRecentAscending);
