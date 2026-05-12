@@ -1,5 +1,19 @@
 package com.example.nsu_backend.controllers;
 
+import java.util.Map;
+import java.util.UUID;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.nsu_backend.dto.SignInRequest;
 import com.example.nsu_backend.dto.SignUpRequest;
 import com.example.nsu_backend.dto.UserAuthResponse;
@@ -8,16 +22,10 @@ import com.example.nsu_backend.exceptions.TokenRefreshException;
 import com.example.nsu_backend.exceptions.UserLoginException;
 import com.example.nsu_backend.services.AuthService;
 import com.example.nsu_backend.services.UserService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -48,7 +56,7 @@ public class AuthenticationController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, newRefreshTokenCookie.toString())
-                .body(new UserAuthResponse(authService.createAccessToken(user.getId().toString())));
+                .body(new UserAuthResponse(authService.createAccessToken(user.getId().toString()), user.getId()));
     }
 
     @PostMapping("/sign_out")
@@ -78,11 +86,12 @@ public class AuthenticationController {
         }
 
         authService.invalidateRefreshToken(refreshToken);
-        ResponseCookie newRefreshTokenCookie = authService.createRefreshTokenCookie(authService.getUserIdFrom(refreshToken));
+        String userId = authService.getUserIdFrom(refreshToken);
+        ResponseCookie newRefreshTokenCookie = authService.createRefreshTokenCookie(userId);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, newRefreshTokenCookie.toString())
-                .body(new UserAuthResponse(authService.createAccessToken(authService.getUserIdFrom(refreshToken))));
+                .body(new UserAuthResponse(authService.createAccessToken(userId), UUID.fromString(userId)));
     }
 
     @GetMapping("/test_secure")
