@@ -35,8 +35,6 @@ import java.util.concurrent.TimeUnit;
 public class AuthService {
     public final static String REFRESH_TOKEN_PREFIX = "refreshToken:";
     public final static String REFRESH_TOKEN_SET_PREFIX = "refreshTokensFor:";
-    public final static String ACCESS_TOKEN_VERSION_PREFIX = "accessTokenVersionFor:";
-    public final static String BLACK_LISTED_TOKEN_PREFIX = "blackListedAccessToken:";
     private final RedisTemplate<String, Object> redisTemplate;
     private final JwtProperties jwtProperties;
     private final ObjectMapper objectMapper;
@@ -53,15 +51,6 @@ public class AuthService {
             Claims payload = Jwts.parser().verifyWith(jwtProperties.getDecodedSecretKey())
                     .build().parseSignedClaims(jws).getPayload();
             Object userId = payload.get("userId");
-            Object accessTokenVersion = payload.get("version");
-            Integer globalAccessTokenVersion = (Integer) Optional.ofNullable(
-                    redisTemplate.opsForValue().get(ACCESS_TOKEN_VERSION_PREFIX + userId.toString())).orElse(1);
-
-            //If access token is blacklisted or has an outdated version
-            if (redisTemplate.hasKey(BLACK_LISTED_TOKEN_PREFIX + jws) ||
-                    (Integer) accessTokenVersion < globalAccessTokenVersion) {
-                throw new AccessTokenException("");
-            }
 
             UsernamePasswordAuthenticationToken authenticationToken =
                     new UsernamePasswordAuthenticationToken(userId, null, List.of());
@@ -85,11 +74,9 @@ public class AuthService {
 
     public String createAccessToken(String userId) {
         Instant expirationInstant = Instant.now().plus(15, ChronoUnit.MINUTES);
-        Integer tokenVersion = getAccessTokenVersion(userId);
         return Jwts.builder()
                 .claims(Map.of(
-                        "userId", userId,
-                        "version", tokenVersion
+                        "userId", userId
                 ))
                 .expiration(Date.from(expirationInstant))
                 .signWith(jwtProperties.getDecodedSecretKey()).compact();
@@ -112,11 +99,6 @@ public class AuthService {
                 .build();
     }
 
-    public void invalidateAllAccessTokens(String userId) {
-        Integer previousAccessTokenVersion = getAccessTokenVersion(userId);
-        redisTemplate.opsForValue().set(ACCESS_TOKEN_VERSION_PREFIX + userId, previousAccessTokenVersion + 1);
-    }
-
     public void invalidateRefreshToken(String refreshToken) {
         redisTemplate.opsForHash().put(refreshToken, "isRevoked", "true");
     }
@@ -129,19 +111,8 @@ public class AuthService {
         redisTemplate.delete(REFRESH_TOKEN_SET_PREFIX + userId);
     }
 
-    public void blacklistAccessToken(String accessToken) {
-        String blackListTokenKey = BLACK_LISTED_TOKEN_PREFIX + accessToken;
-        redisTemplate.opsForValue().set(blackListTokenKey, 0);
-        redisTemplate.expire(blackListTokenKey, 15, TimeUnit.MINUTES);
-    }
-
     public String removeBearerPrefix(String authorizationHeader) {
         return authorizationHeader.substring(7);
-    }
-
-    public Integer getAccessTokenVersion(String userId) {
-        return (Integer) Optional.ofNullable(
-                redisTemplate.opsForValue().get(ACCESS_TOKEN_VERSION_PREFIX + userId)).orElse(1);
     }
 
     public boolean has(String refreshToken) {

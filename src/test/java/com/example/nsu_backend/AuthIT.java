@@ -38,7 +38,7 @@ class AuthIT {
     }
 
     @Test
-    void givenValidAccessToken_whenSignOut_accessAndRefreshTokenShouldBeInvalidated() {
+    void whenSignOut_refreshTokenShouldBeInvalidated() {
         EntityExchangeResult<UserAuthResponse> signInResult = client.post().uri("/sign_in").bodyValue(new SignInRequest("tester", "123123"))
                 .exchangeSuccessfully().expectBody(UserAuthResponse.class).returnResult();
 
@@ -48,9 +48,6 @@ class AuthIT {
         client.get().uri("/test_secure").header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).exchangeSuccessfully();
         client.post().uri("/sign_out").header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).cookie("refresh_token", refreshToken)
                 .exchangeSuccessfully();
-
-        // Access token is invalidated
-        client.get().uri("/test_secure").header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).exchange().expectStatus().is4xxClientError();
 
         // Refresh token is invalidated
         client.post().uri("/refresh_token").cookie("refresh_token", refreshToken).exchange().expectStatus().is4xxClientError();
