@@ -1,6 +1,6 @@
 package com.example.nsu_backend.security;
 
-import com.example.nsu_backend.dto.GenericError;
+import com.example.nsu_backend.dto.MessageResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,7 +21,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
         response.setContentType("application/json");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        GenericError error = new GenericError("Please log in first");
+        MessageResponse error = new MessageResponse("Please log in first");
         String jsonResponseString = objectMapper.writeValueAsString(error);
         response.getWriter().write(jsonResponseString);
     }
