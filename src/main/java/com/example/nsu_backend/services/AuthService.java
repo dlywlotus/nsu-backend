@@ -1,17 +1,12 @@
 package com.example.nsu_backend.services;
 
-import com.example.nsu_backend.dto.GenericError;
-import com.example.nsu_backend.exceptions.AccessTokenException;
+import com.example.nsu_backend.dto.CookieAuthResponse;
+import com.example.nsu_backend.dto.UserAuthResponse;
 import com.example.nsu_backend.exceptions.ApiException;
+import com.example.nsu_backend.exceptions.TokenRefreshException;
 import com.example.nsu_backend.properties.JwtProperties;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -20,9 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -35,48 +28,59 @@ import java.util.concurrent.TimeUnit;
 public class AuthService {
     public final static String REFRESH_TOKEN_PREFIX = "refreshToken:";
     public final static String REFRESH_TOKEN_SET_PREFIX = "refreshTokensFor:";
+    public final static String USER_ID_HASH_KEY = "userId";
+    public final static String IS_REVOKED_HASH_KEY = "isRevoked";
+
+    public final static String JWT_USER_ID_CLAIMS = "userId";
+
     private final RedisTemplate<String, Object> redisTemplate;
     private final JwtProperties jwtProperties;
-    private final ObjectMapper objectMapper;
 
-    public void extractAndValidateJwt(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String token = request.getHeader("Authorization");
-        if (token == null || !token.startsWith("Bearer")) {
-            filterChain.doFilter(request, response);
-            return;
+    public CookieAuthResponse signIn(UUID userId, String refreshToken) {
+        invalidateRefreshToken(refreshToken);
+        ResponseCookie newRefreshTokenCookie = createRefreshTokenCookie(userId.toString());
+        UserAuthResponse userAuthResponse = new UserAuthResponse(createAccessToken(userId.toString()), userId);
+        return new CookieAuthResponse(newRefreshTokenCookie, userAuthResponse);
+    }
+
+    public void signOut(String refreshToken) {
+        invalidateRefreshToken(refreshToken);
+    }
+
+    public CookieAuthResponse handleTokenRefresh(String refreshToken) {
+        if (!redisTemplate.hasKey(refreshToken)) {
+            throw new TokenRefreshException("Refresh token has expired");
         }
 
-        try {
-            String jws = removeBearerPrefix(token);
-            Claims payload = Jwts.parser().verifyWith(jwtProperties.getDecodedSecretKey())
-                    .build().parseSignedClaims(jws).getPayload();
-            Object userId = payload.get("userId");
+        if (isRevoked(refreshToken)) {
+            log.error("MALICIOUS REFRESH TOKEN USAGE DETECTED");
 
-            UsernamePasswordAuthenticationToken authenticationToken =
-                    new UsernamePasswordAuthenticationToken(userId, null, List.of());
-            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            filterChain.doFilter(request, response);
-
-        } catch (ExpiredJwtException | AccessTokenException e) {
-            response.setStatus(401);
-            response.setContentType("application/json");
-            GenericError error = new GenericError("Access token has expired");
-            String jsonResponseString = objectMapper.writeValueAsString(error);
-            response.getWriter().write(jsonResponseString);
-        } catch (JwtException e) {
-            response.setStatus(401);
-            response.setContentType("application/json");
-            GenericError error = new GenericError("Invalid access token provided");
-            String jsonResponseString = objectMapper.writeValueAsString(error);
-            response.getWriter().write(jsonResponseString);
+            deleteAllRefreshTokens(redisTemplate.<String, String>opsForHash().get(refreshToken, USER_ID_HASH_KEY));
+            throw new TokenRefreshException("Refresh token has expired");
         }
+
+        invalidateRefreshToken(refreshToken);
+        String userId = redisTemplate.<String, String>opsForHash().get(refreshToken, USER_ID_HASH_KEY);
+        ResponseCookie newRefreshTokenCookie = createRefreshTokenCookie(userId);
+        UserAuthResponse userAuthResponse = new UserAuthResponse(createAccessToken(userId), UUID.fromString(userId));
+        return new CookieAuthResponse(newRefreshTokenCookie, userAuthResponse);
+    }
+
+    public void validateJwt(String accessToken) {
+        Claims payload = Jwts.parser().verifyWith(jwtProperties.getDecodedSecretKey())
+                .build().parseSignedClaims(accessToken).getPayload();
+        Object userId = payload.get(JWT_USER_ID_CLAIMS);
+
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(userId, null, List.of());
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
     }
 
     public String createAccessToken(String userId) {
         Instant expirationInstant = Instant.now().plus(15, ChronoUnit.MINUTES);
         return Jwts.builder()
                 .claims(Map.of(
-                        "userId", userId
+                        JWT_USER_ID_CLAIMS, userId
                 ))
                 .expiration(Date.from(expirationInstant))
                 .signWith(jwtProperties.getDecodedSecretKey()).compact();
@@ -85,8 +89,8 @@ public class AuthService {
     public ResponseCookie createRefreshTokenCookie(String userId) {
         String refreshToken = REFRESH_TOKEN_PREFIX + UUID.randomUUID();
 
-        redisTemplate.opsForHash().put(refreshToken, "isRevoked", "false");
-        redisTemplate.opsForHash().put(refreshToken, "userId", userId);
+        redisTemplate.opsForHash().put(refreshToken, IS_REVOKED_HASH_KEY, "false");
+        redisTemplate.opsForHash().put(refreshToken, USER_ID_HASH_KEY, userId);
 
         redisTemplate.expire(refreshToken, 30, TimeUnit.DAYS);
         redisTemplate.opsForSet().add(REFRESH_TOKEN_SET_PREFIX + userId, refreshToken);
@@ -100,7 +104,7 @@ public class AuthService {
     }
 
     public void invalidateRefreshToken(String refreshToken) {
-        redisTemplate.opsForHash().put(refreshToken, "isRevoked", "true");
+        redisTemplate.opsForHash().put(refreshToken, IS_REVOKED_HASH_KEY, "true");
     }
 
     public void deleteAllRefreshTokens(String userId) {
@@ -111,24 +115,12 @@ public class AuthService {
         redisTemplate.delete(REFRESH_TOKEN_SET_PREFIX + userId);
     }
 
-    public String removeBearerPrefix(String authorizationHeader) {
-        return authorizationHeader.substring(7);
-    }
-
-    public boolean has(String refreshToken) {
-        return redisTemplate.hasKey(refreshToken);
-    }
-
     public boolean isRevoked(String refreshToken) {
-        String isRevokedString = redisTemplate.<String, String>opsForHash().get(refreshToken, "isRevoked");
+        String isRevokedString = redisTemplate.<String, String>opsForHash().get(refreshToken, IS_REVOKED_HASH_KEY);
         if (isRevokedString == null) {
             throw new ApiException("The key, " + refreshToken + ", or it's hashkey, `isRevoked`, does not exist");
         }
         return isRevokedString.equals("true");
-    }
-
-    public String getUserIdFrom(String refreshToken) {
-        return redisTemplate.<String, String>opsForHash().get(refreshToken, "userId");
     }
 
     public UUID getCurrentUserId() {
