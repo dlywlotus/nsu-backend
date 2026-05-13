@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -99,13 +100,14 @@ public class AuthService {
 
         redisTemplate.opsForHash().put(refreshToken, "isRevoked", "false");
         redisTemplate.opsForHash().put(refreshToken, "userId", userId);
+
         redisTemplate.expire(refreshToken, 30, TimeUnit.DAYS);
         redisTemplate.opsForSet().add(REFRESH_TOKEN_SET_PREFIX + userId, refreshToken);
         return ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
-                .maxAge(3600)
+                .maxAge(Duration.ofDays(30))
                 .sameSite("Lax") // Helps mitigate CSRF
                 .build();
     }
@@ -147,7 +149,6 @@ public class AuthService {
     }
 
     public boolean isRevoked(String refreshToken) {
-
         String isRevokedString = redisTemplate.<String, String>opsForHash().get(refreshToken, "isRevoked");
         if (isRevokedString == null) {
             throw new ApiException("The key, " + refreshToken + ", or it's hashkey, `isRevoked`, does not exist");
