@@ -2,12 +2,11 @@ package com.example.nsu_backend.controllers;
 
 import com.example.nsu_backend.dto.AddCommentRequest;
 import com.example.nsu_backend.dto.CommentDetails;
+import com.example.nsu_backend.dto.MessageResponse;
 import com.example.nsu_backend.services.CommentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("comment")
@@ -21,8 +20,8 @@ public class CommentController {
     }
 
     @DeleteMapping("/{id}")
-    public Map<String, String> deleteComment(@PathVariable Long id) {
+    public MessageResponse deleteComment(@PathVariable Long id) {
         commentService.deleteComment(id);
-        return Map.of("message", "The comment has been deleted successfully!");
+        return new MessageResponse("The comment has been deleted successfully!");
     }
 }
