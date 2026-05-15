@@ -1,14 +1,9 @@
 package com.example.nsu_backend.controller;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
-import java.util.List;
-import java.util.UUID;
-
+import com.example.nsu_backend.controllers.CommentController;
+import com.example.nsu_backend.dto.AddCommentRequest;
+import com.example.nsu_backend.services.AccessTokenService;
+import com.example.nsu_backend.services.CommentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -17,10 +12,12 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
-import com.example.nsu_backend.controllers.CommentController;
-import com.example.nsu_backend.dto.AddCommentRequest;
-import com.example.nsu_backend.services.AuthService;
-import com.example.nsu_backend.services.CommentService;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @WebMvcTest(CommentController.class)
 @AutoConfigureRestTestClient
@@ -29,7 +26,7 @@ public class CommentControllerTest {
     @Autowired
     private RestTestClient client;
     @MockitoBean
-    private AuthService authService;
+    private AccessTokenService accessTokenService;
     @MockitoBean
     private CommentService commentService;
 

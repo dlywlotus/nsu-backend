@@ -23,7 +23,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentMapper commentMapper;
-    private final AuthService authService;
+    private final UserService userService;
 
     public CommentDetails addComment(AddCommentRequest request) {
         if (request.parentCommentId() != null) {
@@ -48,7 +48,7 @@ public class CommentService {
     }
 
     public void deleteComment(Long id) {
-        commentRepository.findByIdAndAuthorId(id, authService.getCurrentUserId())
+        commentRepository.findByIdAndAuthorId(id, userService.getCurrentUserId())
                 .orElseThrow(() -> new EntityNotFoundException("No comment found with the specified id"));
         commentRepository.deleteById(id);
     }

@@ -2,7 +2,7 @@ package com.example.nsu_backend.security;
 
 import com.example.nsu_backend.dto.MessageResponse;
 import com.example.nsu_backend.exceptions.AccessTokenException;
-import com.example.nsu_backend.services.AuthService;
+import com.example.nsu_backend.services.AccessTokenService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -20,8 +20,8 @@ import java.io.IOException;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class JwtFilter extends OncePerRequestFilter {
-    private final AuthService authService;
+public class AccessTokenFilter extends OncePerRequestFilter {
+    private final AccessTokenService accessTokenService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -33,7 +33,7 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         try {
-            authService.validateJwt(authorizationHeader.substring(7));
+            accessTokenService.validateAccessToken(authorizationHeader.substring(7));
             filterChain.doFilter(request, response);
 
         } catch (ExpiredJwtException | AccessTokenException e) {
