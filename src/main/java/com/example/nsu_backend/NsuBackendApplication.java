@@ -2,13 +2,12 @@ package com.example.nsu_backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
+@EnableScheduling
 @SpringBootApplication
 public class NsuBackendApplication {
     public static void main(String[] args) {
         SpringApplication.run(NsuBackendApplication.class, args);
     }
 }
-
-
-//TODO: Periodic Refresh token clean up (when the refresh route is hit or with a cron job)

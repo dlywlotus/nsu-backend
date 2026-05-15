@@ -17,6 +17,13 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
 
     @Modifying
     @NativeQuery("""
+            DELETE FROM refresh_tokens
+            WHERE NOW() >= expires_at
+            """)
+    void cleanUpExpiredTokens();
+
+    @Modifying
+    @NativeQuery("""
             UPDATE refresh_tokens
             SET is_revoked = true, revoked_at = NOW()
             WHERE id = :refreshTokenId

@@ -8,6 +8,8 @@ import com.example.nsu_backend.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -47,10 +49,15 @@ public class RefreshTokenService {
         refreshTokenRepository.deleteById(tokenId);
     }
 
+    public void cleanUpExpiredTokens() {
+        refreshTokenRepository.cleanUpExpiredTokens();
+    }
+
     public List<RevokedTokenDetails> revokeToken(UUID refreshTokenId) {
         return refreshTokenRepository.revokeToken(refreshTokenId);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deleteAllRefreshTokensForUser(UUID userId) {
         refreshTokenRepository.deleteByUserId(userId);
     }
