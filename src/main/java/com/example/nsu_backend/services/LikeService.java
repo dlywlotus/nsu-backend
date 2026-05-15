@@ -16,12 +16,12 @@ public class LikeService {
     private final LikeRepository likeRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
-    private final AuthService authService;
+    private final UserService userService;
     private final PostService postService;
 
     @Transactional
     public void addLike(UUID postId) {
-        UUID userId = authService.getCurrentUserId();
+        UUID userId = userService.getCurrentUserId();
         Like like = Like.builder()
                 .user(userRepository.getReferenceById(userId))
                 .post(postRepository.getReferenceById(postId))
@@ -32,7 +32,7 @@ public class LikeService {
 
     @Transactional
     public void removeLike(UUID postId) {
-        UUID userId = authService.getCurrentUserId();
+        UUID userId = userService.getCurrentUserId();
         likeRepository.deleteByUserIdAndPostId(userId, postId);
         postService.updateLikeCount(postId, false);
     }

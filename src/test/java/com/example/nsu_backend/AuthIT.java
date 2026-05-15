@@ -6,10 +6,8 @@ import com.example.nsu_backend.dto.UserAuthResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
@@ -25,12 +23,9 @@ class AuthIT {
     @LocalServerPort
     private int port;
     private WebTestClient client;
-    @Autowired
-    private RedisConnectionFactory redisConnectionFactory;
 
     @BeforeEach
     void beforeEach() {
-        redisConnectionFactory.getConnection().serverCommands().flushAll();
         client = WebTestClient.bindToServer()
                 .baseUrl("http://localhost:" + port)
                 .build();

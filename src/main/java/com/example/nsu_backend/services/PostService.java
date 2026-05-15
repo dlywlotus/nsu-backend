@@ -1,15 +1,5 @@
 package com.example.nsu_backend.services;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.data.domain.Sort;
-import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.stereotype.Service;
-
 import com.example.nsu_backend.dto.AddPostRequest;
 import com.example.nsu_backend.dto.GetPostRequest;
 import com.example.nsu_backend.dto.PostDetails;
@@ -19,10 +9,14 @@ import com.example.nsu_backend.exceptions.ApiException;
 import com.example.nsu_backend.mappers.PostMapper;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
-
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Slf4j
 @Service
@@ -32,7 +26,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostMapper postMapper;
     private final JdbcClient jdbcClient;
-    private final AuthService authService;
+    private final UserService userService;
 
     public PostDetails getPost(UUID postId) {
         return postRepository.findById(postId).map(postMapper::postToPostDto).orElseThrow(() -> new ApiException("Post not found"));
@@ -44,7 +38,7 @@ public class PostService {
                 .body(request.getBody())
                 .category(request.getCategory())
                 .likeCount(0)
-                .author(userRepository.getReferenceById(authService.getCurrentUserId())).build();
+                .author(userRepository.getReferenceById(userService.getCurrentUserId())).build();
         Post newPost = postRepository.save(post);
         return postMapper.postToPostDto(newPost);
     }
@@ -57,7 +51,7 @@ public class PostService {
                 .title(Optional.ofNullable(request.getTitle()).orElse(oldPost.getTitle()))
                 .body(Optional.ofNullable(request.getBody()).orElse(oldPost.getBody()))
                 .category(Optional.ofNullable(request.getCategory()).orElse(oldPost.getCategory()))
-                .author(userRepository.getReferenceById(authService.getCurrentUserId()))
+                .author(userRepository.getReferenceById(userService.getCurrentUserId()))
                 .createdAt(oldPost.getCreatedAt())
                 .build();
         Post newPost = postRepository.save(post);
@@ -103,7 +97,7 @@ public class PostService {
     }
 
     public void deletePost(UUID postId) {
-        postRepository.findByPostAndAuthorId(postId, authService.getCurrentUserId())
+        postRepository.findByPostAndAuthorId(postId, userService.getCurrentUserId())
                 .orElseThrow(() -> new EntityNotFoundException("The post does not exist"));
         postRepository.deleteById(postId);
     }
