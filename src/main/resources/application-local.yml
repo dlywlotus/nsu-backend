@@ -20,3 +20,7 @@ rust-fs:
   uri: http://localhost:9000
   access_key: admin
   secret_key: 123
+
+frontend:
+  server:
+    url: http://localhost:5173
