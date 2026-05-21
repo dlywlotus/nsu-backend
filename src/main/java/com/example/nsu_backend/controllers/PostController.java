@@ -1,31 +1,17 @@
 package com.example.nsu_backend.controllers;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.example.nsu_backend.dto.AddPostRequest;
-import com.example.nsu_backend.dto.CommentDetails;
-import com.example.nsu_backend.dto.GetPostRequest;
-import com.example.nsu_backend.dto.PostDetails;
-import com.example.nsu_backend.dto.UpdatePostRequest;
+import com.example.nsu_backend.dto.*;
 import com.example.nsu_backend.enums.Category;
 import com.example.nsu_backend.services.CommentService;
 import com.example.nsu_backend.services.PostService;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -71,9 +57,9 @@ public class PostController {
     }
 
     @DeleteMapping("post/{postId}")
-    public Map<String, String> deletePost(@PathVariable UUID postId) {
+    public MessageResponse deletePost(@PathVariable UUID postId) {
         postService.deletePost(postId);
-        return Map.of("message", "The post has been deleted successfully!.");
+        return new MessageResponse("The post has been deleted successfully!.");
     }
 
     @GetMapping("post/{id}/comments")

@@ -1,97 +1,47 @@
 package com.example.nsu_backend.controllers;
 
-import java.util.Map;
-import java.util.UUID;
-
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.example.nsu_backend.dto.SignInRequest;
-import com.example.nsu_backend.dto.SignUpRequest;
-import com.example.nsu_backend.dto.UserAuthResponse;
-import com.example.nsu_backend.entities.User;
-import com.example.nsu_backend.exceptions.TokenRefreshException;
-import com.example.nsu_backend.exceptions.UserLoginException;
-import com.example.nsu_backend.services.AuthService;
-import com.example.nsu_backend.services.UserService;
-
+import com.example.nsu_backend.dto.*;
+import com.example.nsu_backend.services.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 public class AuthenticationController {
-    private final PasswordEncoder passwordEncoder;
-    private final UserService userService;
-    private final AuthService authService;
+    private final AuthenticationService authenticationService;
 
     @PostMapping("/sign_up")
-    public Map<String, String> signUp(@Valid @RequestBody SignUpRequest request) {
-        userService.saveUser(request);
-        return Map.of("message", "User has signed up successfully");
+    public MessageResponse signUp(@Valid @RequestBody SignUpRequest request) {
+        authenticationService.signUp(request);
+        return new MessageResponse("User has signed up successfully");
     }
 
     @PostMapping("/sign_in")
-    public ResponseEntity<UserAuthResponse> signIn(@Valid @RequestBody SignInRequest request,
-                                                   @CookieValue(name = "refresh_token", defaultValue = "") String refreshToken) {
-        User user = userService.getUserByUsername(request.username())
-                .orElseThrow(() -> new UserLoginException("User does not exist"));
-
-        if (!passwordEncoder.matches(request.password(), user.getEncryptedPassword())) {
-            throw new UserLoginException("Invalid username or password");
-        }
-
-        authService.invalidateRefreshToken(refreshToken);
-        ResponseCookie newRefreshTokenCookie = authService.createRefreshTokenCookie(user.getId().toString());
-
+    public ResponseEntity<UserAuthResponse> signIn(@Valid @RequestBody SignInRequest request) {
+        CookieAuthResponse response = authenticationService.signIn(request);
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, newRefreshTokenCookie.toString())
-                .body(new UserAuthResponse(authService.createAccessToken(user.getId().toString()), user.getId()));
+                .header(HttpHeaders.SET_COOKIE, response.cookie().toString())
+                .body(response.userAuthResponse());
     }
 
     @PostMapping("/sign_out")
-    public Map<String, String> signOut(@RequestHeader("Authorization") String authorizationHeader,
-                                       @CookieValue(name = "refresh_token", defaultValue = "") String refreshToken) {
-        // Blacklist existing access token
-        String accessToken = authService.removeBearerPrefix(authorizationHeader);
-        authService.blacklistAccessToken(accessToken);
-
-        authService.invalidateRefreshToken(refreshToken);
-        return Map.of("message", "Successfully logged out");
+    public MessageResponse signOut(@CookieValue(name = "refresh_token", defaultValue = "") UUID refreshTokenId) {
+        authenticationService.signOut(refreshTokenId);
+        return new MessageResponse("Successfully logged out");
     }
 
     @PostMapping("/refresh_token")
-    public ResponseEntity<UserAuthResponse> refreshToken(@CookieValue(name = "refresh_token", defaultValue = "") String refreshToken) {
-        if (refreshToken.isEmpty() || !authService.has(refreshToken)) {
-            throw new TokenRefreshException("Refresh token is invalid or has expired");
-        }
-
-        if (authService.isRevoked(refreshToken)) {
-            log.error("MALICIOUS REFRESH TOKEN USAGE DETECTED");
-            authService.invalidateAllAccessTokens(authService.getUserIdFrom(refreshToken));
-
-            // Refresh tokens are deleted here, NOT INVALIDATED, to prevent a malicious user from spamming the route, disconnecting the user repeatedly
-            authService.deleteAllRefreshTokens(authService.getUserIdFrom(refreshToken));
-            throw new TokenRefreshException("Refresh token has expired");
-        }
-
-        authService.invalidateRefreshToken(refreshToken);
-        String userId = authService.getUserIdFrom(refreshToken);
-        ResponseCookie newRefreshTokenCookie = authService.createRefreshTokenCookie(userId);
-
+    public ResponseEntity<UserAuthResponse> handleTokenRefresh(@CookieValue(name = "refresh_token", defaultValue = "") UUID refreshTokenId) {
+        CookieAuthResponse res = authenticationService.handleTokenRefresh(refreshTokenId);
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, newRefreshTokenCookie.toString())
-                .body(new UserAuthResponse(authService.createAccessToken(userId), UUID.fromString(userId)));
+                .header(HttpHeaders.SET_COOKIE, res.cookie().toString()).body(res.userAuthResponse());
     }
 
     @GetMapping("/test_secure")

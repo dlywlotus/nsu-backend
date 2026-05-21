@@ -10,14 +10,7 @@ services:
       - '5434:5432'
     volumes:
       - db-data:/var/lib/postgresql/data
-  redis:
-    container_name: redis
-    image: redis:alpine
-    ports:
-      - '6378:6379'
-    volumes:
-      - redis-data:/data
-    command: redis-server --requirepass 123
+
   rust-fs:
     container_name: rust-fs
     image: rustfs/rustfs:latest
@@ -35,5 +28,4 @@ services:
 
 volumes:
   db-data:
-  redis-data:
   rust-fs-data:

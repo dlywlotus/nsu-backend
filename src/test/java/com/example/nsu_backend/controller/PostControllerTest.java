@@ -1,15 +1,12 @@
 package com.example.nsu_backend.controller;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
-import java.util.List;
-import java.util.UUID;
-
+import com.example.nsu_backend.controllers.PostController;
+import com.example.nsu_backend.dto.AddPostRequest;
+import com.example.nsu_backend.dto.UpdatePostRequest;
+import com.example.nsu_backend.enums.Category;
+import com.example.nsu_backend.services.AccessTokenService;
+import com.example.nsu_backend.services.CommentService;
+import com.example.nsu_backend.services.PostService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -19,13 +16,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
-import com.example.nsu_backend.controllers.PostController;
-import com.example.nsu_backend.dto.AddPostRequest;
-import com.example.nsu_backend.dto.UpdatePostRequest;
-import com.example.nsu_backend.enums.Category;
-import com.example.nsu_backend.services.AuthService;
-import com.example.nsu_backend.services.CommentService;
-import com.example.nsu_backend.services.PostService;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.*;
 
 @WebMvcTest(PostController.class)
 @AutoConfigureRestTestClient
@@ -36,7 +33,7 @@ public class PostControllerTest {
     @Autowired
     private RestTestClient client;
     @MockitoBean
-    private AuthService authService;
+    private AccessTokenService accessTokenService;
     @MockitoBean
     private PostService postService;
 
