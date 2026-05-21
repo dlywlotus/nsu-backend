@@ -1,20 +1,22 @@
 package com.example.nsu_backend.services;
 
-import com.example.nsu_backend.dto.RevokedTokenDetails;
-import com.example.nsu_backend.entities.RefreshToken;
-import com.example.nsu_backend.exceptions.ApiException;
-import com.example.nsu_backend.repositories.RefreshTokenRepository;
-import com.example.nsu_backend.repositories.UserRepository;
-import lombok.RequiredArgsConstructor;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
+import com.example.nsu_backend.dto.RevokedTokenDetails;
+import com.example.nsu_backend.entities.RefreshToken;
+import com.example.nsu_backend.exceptions.ApiException;
+import com.example.nsu_backend.repositories.RefreshTokenRepository;
+import com.example.nsu_backend.repositories.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -28,13 +30,17 @@ public class RefreshTokenService {
                 .orElseThrow(() -> new ApiException("Invalid refresh token"));
     }
 
-    public ResponseCookie createToken(UUID userId) {
+    public UUID createToken(UUID userId) {
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(userRepository.getReferenceById(userId))
                 .expiresAt(OffsetDateTime.now().plusDays(30))
                 .build();
         RefreshToken savedRefreshToken = refreshTokenRepository.save(refreshToken);
-        return generateCookie(savedRefreshToken.getId());
+        return savedRefreshToken.getId();
+    }
+
+    public void setSuccessorToken(UUID revokedTokenId, UUID successorTokenId) {
+        refreshTokenRepository.setSuccessorToken(revokedTokenId, successorTokenId);
     }
 
     public void removeToken(UUID tokenId) {

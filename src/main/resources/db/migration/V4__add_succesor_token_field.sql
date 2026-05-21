@@ -1,0 +1,1 @@
+ALTER TABLE refresh_tokens ADD successor_token_id UUID;
