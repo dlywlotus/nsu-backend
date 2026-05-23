@@ -1,9 +1,7 @@
 package com.example.nsu_backend;
 
-import com.example.nsu_backend.dto.SignInRequest;
-import com.example.nsu_backend.dto.SignUpRequest;
-import com.example.nsu_backend.dto.UserAuthResponse;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,7 +11,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import java.util.Optional;
+import com.example.nsu_backend.dto.SignInRequest;
+import com.example.nsu_backend.dto.SignUpRequest;
+import com.example.nsu_backend.dto.UserAuthResponse;
+
+import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
@@ -49,7 +51,7 @@ class AuthIT {
     }
 
     @Test
-    void givenRefreshTokenStolen_whenUseInvalidatedToken_deleteAllRefreshTokens() {
+    void givenRefreshTokenStolen_whenUseInvalidatedToken_deleteAllRefreshTokens() throws InterruptedException {
         EntityExchangeResult<UserAuthResponse> signInResult = client.post().uri("/sign_in").bodyValue(new SignInRequest("tester", "123123"))
                 .exchangeSuccessfully().expectBody(UserAuthResponse.class).returnResult();
         String refreshToken = signInResult.getResponseCookies().toSingleValueMap().get("refresh_token").getValue();
@@ -58,7 +60,9 @@ class AuthIT {
                 .exchangeSuccessfully().expectBody(UserAuthResponse.class).returnResult();
         String newRefreshToken = firstRefreshResult.getResponseCookies().toSingleValueMap().get("refresh_token").getValue();
 
-        // After the first refresh, the previous refresh token should be invalidated, so the second refresh with the same refresh token will fail
+        // After the first refresh, the previous refresh token should be invalidated
+        // So the second refresh with the same refresh token, after the grace period of 1s (to handle race conditions), will fail
+        Thread.sleep(1500);
         client.post().uri("/refresh_token").cookie("refresh_token", refreshToken).exchange().expectStatus().is4xxClientError();
 
         // Using the invalidated refresh token triggers the deletion of all refresh tokens associated with the user
