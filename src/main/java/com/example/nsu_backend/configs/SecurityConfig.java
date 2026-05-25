@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -37,6 +38,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(requests ->
                         requests.requestMatchers("/sign_in", "/sign_up", "/error", "/refresh_token", "/api-docs/**", "/swagger-ui/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/post/**", "/posts/**").permitAll()
                                 .anyRequest().authenticated())
                 .addFilterBefore(accessTokenFilter, AuthorizationFilter.class)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(entryPoint))
