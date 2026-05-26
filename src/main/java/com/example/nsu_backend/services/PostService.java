@@ -1,22 +1,30 @@
 package com.example.nsu_backend.services;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Service;
+
 import com.example.nsu_backend.dto.AddPostRequest;
 import com.example.nsu_backend.dto.GetPostRequest;
+import com.example.nsu_backend.dto.PageOfPosts;
 import com.example.nsu_backend.dto.PostDetails;
 import com.example.nsu_backend.dto.UpdatePostRequest;
+import com.example.nsu_backend.dto.VerbosePostDetails;
 import com.example.nsu_backend.entities.Post;
 import com.example.nsu_backend.exceptions.ApiException;
 import com.example.nsu_backend.mappers.PostMapper;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Sort;
-import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 @Slf4j
 @Service
@@ -58,42 +66,77 @@ public class PostService {
         return postMapper.postToPostDto(newPost);
     }
 
-    public List<PostDetails> getPosts(GetPostRequest request) {
+    public PageOfPosts getPosts(GetPostRequest request) {
+        StringBuilder postsQuery = new StringBuilder("""
+                SELECT p.*, u.username, u.profile_icon_image_key,
+                EXISTS (
+                    SELECT 1
+                    FROM likes
+                    WHERE user_id = :userId
+                    AND post_id = p.id
+                ) as userLiked
+                FROM posts p
+                JOIN users u ON p.author_id = u.id
+                WHERE p.id IS NOT NULL
+                """);
+
+        StringBuilder countQuery = new StringBuilder("""
+                SELECT COUNT(*)
+                FROM posts p
+                JOIN users u ON p.author_id = u.id
+                WHERE p.id IS NOT NULL
+                """);
+
         HashMap<String, Object> paramMap = new HashMap<>();
-        StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM posts p WHERE p.id IS NOT NULL");
+        paramMap.put("userId", userService.getCurrentUserId());
+
 
         if (!Objects.isNull(request.category())) {
             paramMap.put("category", request.category().name());
-            sqlBuilder.append(" AND p.category = :category");
+            postsQuery.append(" AND p.category = :category");
+            countQuery.append(" AND p.category = :category");
         }
 
         if (!Objects.isNull(request.searchInput())) {
             paramMap.put("searchInput", request.searchInput());
-            sqlBuilder.append(" AND p.search_vector @@ to_tsquery('english', :searchInput)");
+            postsQuery.append(" AND p.search_vector @@ to_tsquery('english', :searchInput)");
+            countQuery.append(" AND p.search_vector @@ to_tsquery('english', :searchInput)");
         }
 
         if (!Objects.isNull(request.authorId())) {
             paramMap.put("authorId", request.authorId());
-            sqlBuilder.append(" AND p.author_id = :authorId");
+            postsQuery.append(" AND p.author_id = :authorId");
+            countQuery.append(" AND p.author_id = :authorId");
         }
 
         Sort.Order order = request.pageable().getSort().stream().findFirst()
                 .orElse(new Sort.Order(Sort.Direction.DESC, "createdAt"));
 
         if (order.getProperty().equals("createdAt")) {
-            sqlBuilder.append(" ORDER BY p.created_at ");
+            postsQuery.append(" ORDER BY p.created_at ");
         } else {
-            sqlBuilder.append(" ORDER BY p.like_count ");
+            postsQuery.append(" ORDER BY p.like_count ");
         }
 
         paramMap.put("limit", request.pageable().getPageSize());
         paramMap.put("offset", request.pageable().getOffset());
-        sqlBuilder.append(order.getDirection()).append(" LIMIT :limit OFFSET :offset");
-        String sql = sqlBuilder.toString();
+        postsQuery.append(order.getDirection()).append(" LIMIT :limit OFFSET :offset");
 
-        return jdbcClient.sql(sql)
+
+        List<VerbosePostDetails> postDetails = jdbcClient
+                .sql(postsQuery.toString())
                 .params(paramMap)
-                .query(PostDetails.class).list();
+                .query(VerbosePostDetails.class).list();
+
+        long numPosts = jdbcClient
+                .sql(countQuery.toString())
+                .params(paramMap)
+                .query(Long.class).single();
+
+        return new PageOfPosts(
+                request.pageable().getPageNumber(),
+                (int) Math.ceil((double) numPosts / request.pageable().getPageSize()),
+                postDetails);
     }
 
     public void deletePost(UUID postId) {
@@ -107,6 +150,14 @@ public class PostService {
             postRepository.incrementLikeCount(postId);
         } else {
             postRepository.decrementLikeCount(postId);
+        }
+    }
+
+    public void updateCommentCount(UUID postId, boolean isAdd) {
+        if (isAdd) {
+            postRepository.incrementCommentCount(postId);
+        } else {
+            postRepository.decrementCommentCount(postId);
         }
     }
 }

@@ -14,8 +14,5 @@ public record AddCommentRequest(
         @NotNull
         UUID postId,
 
-        @NotNull
-        UUID authorId,
-
         Long parentCommentId) {
 }

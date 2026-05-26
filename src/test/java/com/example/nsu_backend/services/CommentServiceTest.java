@@ -1,5 +1,25 @@
 package com.example.nsu_backend.services;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.example.nsu_backend.dto.AddCommentRequest;
 import com.example.nsu_backend.dto.CommentDetails;
 import com.example.nsu_backend.entities.Comment;
@@ -10,23 +30,8 @@ import com.example.nsu_backend.mappers.CommentMapper;
 import com.example.nsu_backend.repositories.CommentRepository;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
+
 import jakarta.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class CommentServiceTest {
@@ -36,6 +41,10 @@ public class CommentServiceTest {
     private UserRepository userRepository;
     @Mock
     private PostRepository postRepository;
+    @Mock
+    private PostService postService;
+    @Mock
+    private UserService userService;
 
     @Spy
     private CommentMapper commentMapper = Mappers.getMapper(CommentMapper.class);
@@ -48,7 +57,7 @@ public class CommentServiceTest {
         // Treat comment 999 as a comment that does not exist
         when(commentRepository.findById(999L)).thenReturn(Optional.empty());
         assertThrows(EntityNotFoundException.class, () ->
-                commentService.addComment(new AddCommentRequest("New comment", UUID.randomUUID(), UUID.randomUUID(), 999L)));
+                commentService.addComment(new AddCommentRequest("New comment", UUID.randomUUID(), 999L)));
     }
 
     @Test
@@ -63,7 +72,7 @@ public class CommentServiceTest {
         when(commentRepository.findById(2L)).thenReturn(Optional.of(nestedComment));
 
         assertThrows(NestedCommentException.class, () ->
-                commentService.addComment(new AddCommentRequest("New comment", postOneId, userOneId, 2L)));
+                commentService.addComment(new AddCommentRequest("New comment", postOneId, 2L)));
     }
 
 
@@ -75,7 +84,7 @@ public class CommentServiceTest {
         Post postOne = Post.builder().id(postOneId).build();
         Comment topLevelComment = Comment.builder().id(1L).post(postOne).author(userOne).build();
 
-        AddCommentRequest newCommentRequest = new AddCommentRequest("New comment", postOneId, userOneId, 1L);
+        AddCommentRequest newCommentRequest = new AddCommentRequest("New comment", postOneId, 1L);
         Comment newComment = Comment.builder().id(2L).body("New comment").post(postOne).author(userOne).parentComment(topLevelComment).build();
         CommentDetails commentDto = new CommentDetails(2L, "New comment", postOneId, userOneId, 1L, OffsetDateTime.now(), List.of());
 

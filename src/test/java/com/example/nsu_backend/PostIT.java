@@ -18,6 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.example.nsu_backend.dto.AddPostRequest;
+import com.example.nsu_backend.dto.PageOfPosts;
 import com.example.nsu_backend.dto.PostDetails;
 import com.example.nsu_backend.dto.SignInRequest;
 import com.example.nsu_backend.dto.SignUpRequest;
@@ -111,48 +112,48 @@ public class PostIT {
         // Like post two
         client.post().uri("/like/" + postTwo.id()).header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).exchangeSuccessfully();
 
-        List<PostDetails> singlePostPage = client.get().uri("/posts?page=0&size=1")
+        PageOfPosts singlePostPage = client.get().uri("/posts?page=0&size=1")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).exchangeSuccessfully()
-                .expectBodyList(PostDetails.class).returnResult().getResponseBody();
+                .expectBody(PageOfPosts.class).returnResult().getResponseBody();
         assertNotNull(singlePostPage);
-        assertEquals(1, singlePostPage.size());
+        assertEquals(1, singlePostPage.posts().size());
 
-        List<PostDetails> filterByCategory = client.get().uri("/posts?category=HOUSING")
+        PageOfPosts filterByCategory = client.get().uri("/posts?category=HOUSING")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).exchangeSuccessfully()
-                .expectBodyList(PostDetails.class).returnResult().getResponseBody();
+                .expectBody(PageOfPosts.class).returnResult().getResponseBody();
         assertNotNull(filterByCategory);
-        assertEquals(filterByCategory.get(0).body(), postTwo.body());
+        assertEquals(filterByCategory.posts().get(0).body(), postTwo.body());
 
-        List<PostDetails> filterByTitle = client.get().uri("/posts?searchInput=First")
+        PageOfPosts filterByTitle = client.get().uri("/posts?searchInput=First")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).exchangeSuccessfully()
-                .expectBodyList(PostDetails.class).returnResult().getResponseBody();
+                .expectBody(PageOfPosts.class).returnResult().getResponseBody();
         assertNotNull(filterByTitle);
-        assertEquals(filterByTitle.get(0).body(), postOne.body());
+        assertEquals(filterByTitle.posts().get(0).body(), postOne.body());
 
-        List<PostDetails> filterByBody = client.get().uri("/posts?searchInput=Alice")
+        PageOfPosts filterByBody = client.get().uri("/posts?searchInput=Alice")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).exchangeSuccessfully()
-                .expectBodyList(PostDetails.class).returnResult().getResponseBody();
+                .expectBody(PageOfPosts.class).returnResult().getResponseBody();
         assertNotNull(filterByBody);
-        assertEquals(filterByBody.get(0).title(), postOne.title());
+        assertEquals(filterByBody.posts().get(0).title(), postOne.title());
 
-        List<PostDetails> filterBySearchAndCategory = client.get().uri("/posts?searchInput=First&category=HOUSING")
+        PageOfPosts filterBySearchAndCategory = client.get().uri("/posts?searchInput=First&category=HOUSING")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).exchangeSuccessfully()
-                .expectBodyList(PostDetails.class).returnResult().getResponseBody();
+                .expectBody(PageOfPosts.class).returnResult().getResponseBody();
         assertNotNull(filterBySearchAndCategory);
-        assertTrue(filterBySearchAndCategory.isEmpty());
+        assertTrue(filterBySearchAndCategory.posts().isEmpty());
 
-        List<PostDetails> sortByRecentAscending = client.get().uri("/posts?sort=createdAt,asc")
+        PageOfPosts sortByRecentAscending = client.get().uri("/posts?sort=createdAt,asc")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).exchangeSuccessfully()
-                .expectBodyList(PostDetails.class).returnResult().getResponseBody();
+                .expectBody(PageOfPosts.class).returnResult().getResponseBody();
         assertNotNull(sortByRecentAscending);
         // The first post should be at the top of the list because it is older
-        assertEquals(sortByRecentAscending.get(0).title(), postOne.title());
+        assertEquals(sortByRecentAscending.posts().get(0).title(), postOne.title());
 
-        List<PostDetails> sortByLikes = client.get().uri("/posts?sort=likes,desc")
+        PageOfPosts sortByLikes = client.get().uri("/posts?sort=likes,desc")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).exchangeSuccessfully()
-                .expectBodyList(PostDetails.class).returnResult().getResponseBody();
+                .expectBody(PageOfPosts.class).returnResult().getResponseBody();
         assertNotNull(sortByLikes);
-        assertEquals(sortByLikes.get(0).title(), postTwo.title());
+        assertEquals(sortByLikes.posts().get(0).title(), postTwo.title());
     }
 }
 

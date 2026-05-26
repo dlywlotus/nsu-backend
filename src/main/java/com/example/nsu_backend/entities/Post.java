@@ -50,6 +50,9 @@ public class Post {
     @Column(nullable = false)
     private int likeCount;
 
+    @Column(nullable = false)
+    private int commentCount;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;

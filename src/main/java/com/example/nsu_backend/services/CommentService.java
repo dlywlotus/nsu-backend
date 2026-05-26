@@ -1,5 +1,13 @@
 package com.example.nsu_backend.services;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
 import com.example.nsu_backend.dto.AddCommentRequest;
 import com.example.nsu_backend.dto.CommentDetails;
 import com.example.nsu_backend.entities.Comment;
@@ -8,12 +16,11 @@ import com.example.nsu_backend.mappers.CommentMapper;
 import com.example.nsu_backend.repositories.CommentRepository;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
+
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 @Slf4j
 @Service
@@ -24,7 +31,9 @@ public class CommentService {
     private final PostRepository postRepository;
     private final CommentMapper commentMapper;
     private final UserService userService;
+    private final PostService postService;
 
+    @Transactional
     public CommentDetails addComment(AddCommentRequest request) {
         if (request.parentCommentId() != null) {
             Comment parentComment = commentRepository.findById(request.parentCommentId()).orElseThrow(
@@ -37,20 +46,23 @@ public class CommentService {
 
         Comment comment = Comment.builder()
                 .body(request.body())
-                .author(userRepository.getReferenceById(request.authorId()))
+                .author(userRepository.getReferenceById(userService.getCurrentUserId()))
                 .post(postRepository.getReferenceById(request.postId()))
                 .parentComment(request.parentCommentId() == null
                         ? null
                         : commentRepository.getReferenceById(request.parentCommentId()))
                 .build();
         Comment newComment = commentRepository.save(comment);
+        postService.updateCommentCount(request.postId(), true);
         return commentMapper.commentToCommentDto(newComment);
     }
 
+    @Transactional
     public void deleteComment(Long id) {
-        commentRepository.findByIdAndAuthorId(id, userService.getCurrentUserId())
-                .orElseThrow(() -> new EntityNotFoundException("No comment found with the specified id"));
+        Comment commentToDelete = commentRepository.findByIdAndAuthorId(id, userService.getCurrentUserId())
+                .orElseThrow(() -> new EntityNotFoundException("Comment not found."));
         commentRepository.deleteById(id);
+        postService.updateCommentCount(commentToDelete.getPost().getId(), false);
     }
 
     public List<CommentDetails> getCommentsByPost(UUID postId) {

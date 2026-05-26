@@ -1,17 +1,32 @@
 package com.example.nsu_backend.controllers;
 
-import com.example.nsu_backend.dto.*;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.nsu_backend.dto.AddPostRequest;
+import com.example.nsu_backend.dto.CommentDetails;
+import com.example.nsu_backend.dto.GetPostRequest;
+import com.example.nsu_backend.dto.MessageResponse;
+import com.example.nsu_backend.dto.PageOfPosts;
+import com.example.nsu_backend.dto.PostDetails;
+import com.example.nsu_backend.dto.UpdatePostRequest;
 import com.example.nsu_backend.enums.Category;
 import com.example.nsu_backend.services.CommentService;
 import com.example.nsu_backend.services.PostService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -34,10 +49,10 @@ public class PostController {
      * @return a list of posts that is filtered and sorted according to the inputs
      */
     @GetMapping("posts")
-    public List<PostDetails> getPosts(@RequestParam(required = false) Category category,
-                                      @RequestParam(required = false) String searchInput,
-                                      @RequestParam(required = false) UUID authorId,
-                                      Pageable pageable) {
+    public PageOfPosts getPosts(@RequestParam(required = false) Category category,
+                                @RequestParam(required = false) String searchInput,
+                                @RequestParam(required = false) String authorId,
+                                Pageable pageable) {
         return postService.getPosts(new GetPostRequest(category, searchInput, authorId, pageable));
     }
 

@@ -1,5 +1,16 @@
 package com.example.nsu_backend.services;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.nsu_backend.dto.SignInRequest;
 import com.example.nsu_backend.dto.SignUpRequest;
 import com.example.nsu_backend.dto.UpdateUsernameRequest;
@@ -9,26 +20,19 @@ import com.example.nsu_backend.exceptions.ApiException;
 import com.example.nsu_backend.exceptions.UserLoginException;
 import com.example.nsu_backend.mappers.UserMapper;
 import com.example.nsu_backend.repositories.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.util.Optional;
-import java.util.UUID;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
+    public static final UUID UNAUTHENTICATED_USER_ID = UUID.randomUUID();
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
@@ -57,9 +61,14 @@ public class UserService {
         return user;
     }
 
+
     public UUID getCurrentUserId() {
-        return UUID.fromString((String) Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
-                .map(Authentication::getPrincipal).orElse(""));
+        return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+                .filter(authentication -> authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken))
+                .map(Authentication::getPrincipal)
+                .map(Object::toString)
+                .map(UUID::fromString)
+                .orElse(UNAUTHENTICATED_USER_ID);
     }
 
     @Transactional
