@@ -4,9 +4,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-
-// TODO: Set up integration tests for likes
-
 // TODO: Migrate all integration tests to use test containers
 
 
