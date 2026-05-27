@@ -1,14 +1,16 @@
 package com.example.nsu_backend.services;
 
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
 import com.example.nsu_backend.entities.Like;
 import com.example.nsu_backend.repositories.LikeRepository;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -27,13 +29,13 @@ public class LikeService {
                 .post(postRepository.getReferenceById(postId))
                 .build();
         likeRepository.save(like);
-        postService.updateLikeCount(postId, true);
+        postService.updateLikeCount(postId, 1);
     }
 
     @Transactional
     public void removeLike(UUID postId) {
         UUID userId = userService.getCurrentUserId();
         likeRepository.deleteByUserIdAndPostId(userId, postId);
-        postService.updateLikeCount(postId, false);
+        postService.updateLikeCount(postId, -1);
     }
 }

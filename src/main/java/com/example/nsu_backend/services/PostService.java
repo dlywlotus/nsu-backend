@@ -36,8 +36,26 @@ public class PostService {
     private final JdbcClient jdbcClient;
     private final UserService userService;
 
-    public PostDetails getPost(UUID postId) {
-        return postRepository.findById(postId).map(postMapper::postToPostDto).orElseThrow(() -> new ApiException("Post not found"));
+    public VerbosePostDetails getPost(UUID postId) {
+        String sql = """
+                SELECT p.*, u.username, u.profile_icon_image_key,
+                EXISTS (
+                    SELECT 1
+                    FROM likes
+                    WHERE user_id = :userId
+                    AND post_id = p.id
+                ) as user_liked
+                FROM posts p
+                JOIN users u ON p.author_id = u.id
+                WHERE p.id = :postId
+                """;
+
+        return jdbcClient.sql(sql)
+                .param("postId", postId)
+                .param("userId", userService.getCurrentUserId())
+                .query(VerbosePostDetails.class)
+                .optional()
+                .orElseThrow(() -> new ApiException("Post not found"));
     }
 
     public PostDetails createPost(AddPostRequest request) {
@@ -74,7 +92,7 @@ public class PostService {
                     FROM likes
                     WHERE user_id = :userId
                     AND post_id = p.id
-                ) as userLiked
+                ) as user_liked
                 FROM posts p
                 JOIN users u ON p.author_id = u.id
                 WHERE p.id IS NOT NULL
@@ -145,19 +163,11 @@ public class PostService {
         postRepository.deleteById(postId);
     }
 
-    public void updateLikeCount(UUID postId, boolean isAdd) {
-        if (isAdd) {
-            postRepository.incrementLikeCount(postId);
-        } else {
-            postRepository.decrementLikeCount(postId);
-        }
+    public void updateLikeCount(UUID postId, int change) {
+        postRepository.updateLikeCount(postId, change);
     }
 
-    public void updateCommentCount(UUID postId, boolean isAdd) {
-        if (isAdd) {
-            postRepository.incrementCommentCount(postId);
-        } else {
-            postRepository.decrementCommentCount(postId);
-        }
+    public void updateCommentCount(UUID postId, int change) {
+        postRepository.updateCommentCount(postId, change);
     }
 }

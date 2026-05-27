@@ -20,6 +20,7 @@ import com.example.nsu_backend.dto.MessageResponse;
 import com.example.nsu_backend.dto.PageOfPosts;
 import com.example.nsu_backend.dto.PostDetails;
 import com.example.nsu_backend.dto.UpdatePostRequest;
+import com.example.nsu_backend.dto.VerbosePostDetails;
 import com.example.nsu_backend.enums.Category;
 import com.example.nsu_backend.services.CommentService;
 import com.example.nsu_backend.services.PostService;
@@ -57,7 +58,7 @@ public class PostController {
     }
 
     @GetMapping("post/{postId}")
-    public PostDetails getPost(@PathVariable UUID postId) {
+    public VerbosePostDetails getPost(@PathVariable UUID postId) {
         return postService.getPost(postId);
     }
 

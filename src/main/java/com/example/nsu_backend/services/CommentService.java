@@ -53,7 +53,7 @@ public class CommentService {
                         : commentRepository.getReferenceById(request.parentCommentId()))
                 .build();
         Comment newComment = commentRepository.save(comment);
-        postService.updateCommentCount(request.postId(), true);
+        postService.updateCommentCount(request.postId(), 1);
         return commentMapper.commentToCommentDto(newComment);
     }
 
@@ -61,8 +61,8 @@ public class CommentService {
     public void deleteComment(Long id) {
         Comment commentToDelete = commentRepository.findByIdAndAuthorId(id, userService.getCurrentUserId())
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found."));
-        commentRepository.deleteById(id);
-        postService.updateCommentCount(commentToDelete.getPost().getId(), false);
+        int numDeleted = commentRepository.deleteCommentTree(id);
+        postService.updateCommentCount(commentToDelete.getPost().getId(), numDeleted * -1);
     }
 
     public List<CommentDetails> getCommentsByPost(UUID postId) {

@@ -1,4 +1,4 @@
-package com.example.nsu_backend;
+package com.example.nsu_backend.integration;
 
 import java.util.Optional;
 

@@ -12,23 +12,14 @@ import com.example.nsu_backend.entities.Post;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, UUID> {
-
     @Query("Select p FROM Post p WHERE p.author.id = :authorId AND p.id = :postId")
     Optional<Post> findByPostAndAuthorId(UUID postId, UUID authorId);
 
     @Modifying
-    @Query("UPDATE Post p SET p.likeCount = p.likeCount - 1 WHERE p.id = :postId")
-    void decrementLikeCount(UUID postId);
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount + :change WHERE p.id = :postId")
+    void updateLikeCount(UUID postId, int change);
 
     @Modifying
-    @Query("UPDATE Post p SET p.likeCount = p.likeCount + 1 WHERE p.id = :postId")
-    void incrementLikeCount(UUID postId);
-
-    @Modifying
-    @Query("UPDATE Post p SET p.commentCount = p.commentCount - 1 WHERE p.id = :postId")
-    void decrementCommentCount(UUID postId);
-
-    @Modifying
-    @Query("UPDATE Post p SET p.commentCount = p.commentCount + 1 WHERE p.id = :postId")
-    void incrementCommentCount(UUID postId);
+    @Query("UPDATE Post p SET p.commentCount = p.commentCount + :change WHERE p.id = :postId")
+    void updateCommentCount(UUID postId, int change);
 }
