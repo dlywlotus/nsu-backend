@@ -12,10 +12,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpHeaders;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.example.nsu_backend.dto.AddPostRequest;
 import com.example.nsu_backend.dto.PageOfPosts;
@@ -25,28 +29,32 @@ import com.example.nsu_backend.dto.SignUpRequest;
 import com.example.nsu_backend.dto.UpdatePostRequest;
 import com.example.nsu_backend.dto.UserAuthResponse;
 import com.example.nsu_backend.enums.Category;
+import com.example.nsu_backend.utils.PostgresUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ActiveProfiles("local")
+@Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class PostIT {
+    @Container
+    @ServiceConnection
+    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17");
+
     @LocalServerPort
     private int port;
-    private WebTestClient client;
     @Autowired
     private JdbcClient jdbcClient;
+    @Autowired
+    private PostgresUtils postgresUtils;
+
+    private WebTestClient client;
     private String accessToken;
 
     @BeforeEach
     void beforeEach() {
-        // Clear postgres tables
-        List<String> tables = List.of("posts", "users");
-        tables.forEach(table ->
-                jdbcClient.sql("TRUNCATE TABLE " + table + " RESTART IDENTITY CASCADE").update()
-        );
-
+        postgresUtils.clear();
         client = WebTestClient.bindToServer()
                 .baseUrl("http://localhost:" + port)
                 .build();
