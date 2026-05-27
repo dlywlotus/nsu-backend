@@ -1,4 +1,4 @@
-package com.example.nsu_backend;
+package com.example.nsu_backend.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

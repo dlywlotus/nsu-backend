@@ -38,7 +38,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final S3Client s3Client;
 
-    public void saveUser(SignUpRequest request) {
+    public UserDetails saveUser(SignUpRequest request) {
         userRepository.findByUsername(request.username()).ifPresent(user -> {
             throw new ApiException("Account with the specified username already exists");
         });
@@ -47,7 +47,8 @@ public class UserService {
                 .username(request.username())
                 .encryptedPassword(passwordEncoder.encode(request.password()))
                 .build();
-        userRepository.save(user);
+        User newUser = userRepository.save(user);
+        return new UserDetails(newUser.getId(), newUser.getUsername(), newUser.getProfileIconImageKey());
     }
 
     public User validateUserDetails(SignInRequest request) {

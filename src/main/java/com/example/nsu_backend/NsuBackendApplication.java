@@ -4,11 +4,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+
 // TODO: Set up integration tests for comment and likes
-// TODO: Tests should spin up test containers and inject authenticated user manually or with @WithMockUser
 // TODO: Test if adding/ deleting comments/likes updates post comment/like count
 
-// TODO: Update single post GET route to return VerbosePostDetails
+// TODO: Migrate all integration tests to use test containers
+// BUG: when delete parent comment child comments are not deleted
 
 
 @EnableScheduling
