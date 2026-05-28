@@ -4,6 +4,13 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
-public record CommentDetails(Long id, String body, UUID postId, UUID authorId,
-                             Long parentCommentId, OffsetDateTime createdAt, List<CommentDetails> nestedComments) {
+public record CommentDetails(Long id,
+                             String body,
+                             UUID postId,
+                             UUID authorId,
+                             String username,
+                             String profileIconImageKey,
+                             Long parentCommentId,
+                             OffsetDateTime createdAt,
+                             List<CommentDetails> nestedComments) {
 }

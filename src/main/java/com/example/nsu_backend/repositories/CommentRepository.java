@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.NativeQuery;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.example.nsu_backend.entities.Comment;
@@ -14,8 +15,16 @@ import com.example.nsu_backend.entities.Comment;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     Optional<Comment> findByIdAndAuthorId(Long id, UUID authorId);
-
+    
+    @Query("""
+            SELECT c
+            FROM Comment c
+            JOIN FETCH c.author
+            LEFT JOIN FETCH c.parentComment
+            WHERE c.post.id = :postId
+            """)
     List<Comment> findByPostId(UUID postId);
+
 
     @Modifying
     @NativeQuery("""

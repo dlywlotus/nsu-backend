@@ -86,7 +86,8 @@ public class CommentServiceTest {
 
         AddCommentRequest newCommentRequest = new AddCommentRequest("New comment", postOneId, 1L);
         Comment newComment = Comment.builder().id(2L).body("New comment").post(postOne).author(userOne).parentComment(topLevelComment).build();
-        CommentDetails commentDto = new CommentDetails(2L, "New comment", postOneId, userOneId, 1L, OffsetDateTime.now(), List.of());
+        CommentDetails commentDto = new CommentDetails(2L, "New comment", postOneId, userOneId,
+                "tester", null, 1L, OffsetDateTime.now(), List.of());
 
         when(commentRepository.findById(1L)).thenReturn(Optional.of(topLevelComment));
         when(commentRepository.save(any())).thenReturn(newComment);
