@@ -52,7 +52,7 @@ public class PostController {
     @GetMapping("posts")
     public PageOfPosts getPosts(@RequestParam(required = false) Category category,
                                 @RequestParam(required = false) String searchInput,
-                                @RequestParam(required = false) String authorId,
+                                @RequestParam(required = false) UUID authorId,
                                 Pageable pageable) {
         return postService.getPosts(new GetPostRequest(category, searchInput, authorId, pageable));
     }

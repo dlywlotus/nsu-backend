@@ -38,6 +38,11 @@ public class UserService {
     private final UserMapper userMapper;
     private final S3Client s3Client;
 
+    public UserDetails getUser(UUID userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ApiException("User not found"));
+        return userMapper.userToUserDto(user);
+    }
+
     public UserDetails saveUser(SignUpRequest request) {
         userRepository.findByUsername(request.username()).ifPresent(user -> {
             throw new ApiException("Account with the specified username already exists");
