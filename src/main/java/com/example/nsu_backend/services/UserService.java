@@ -94,12 +94,14 @@ public class UserService {
 
         try {
             // Delete old image from object store
-            s3Client.deleteObject(
-                    DeleteObjectRequest.builder()
-                            .bucket("profile-icons")
-                            .key(user.getProfileIconImageKey())
-                            .build()
-            );
+            if (user.getProfileIconImageKey() != null) {
+                s3Client.deleteObject(
+                        DeleteObjectRequest.builder()
+                                .bucket("profile-icons")
+                                .key(user.getProfileIconImageKey())
+                                .build()
+                );
+            }
 
             // Add new image to object store
             s3Client.putObject(
@@ -117,6 +119,7 @@ public class UserService {
             return userMapper.userToUserDto(saved);
 
         } catch (Exception ex) {
+            log.error(ex.getMessage());
             try {
                 s3Client.deleteObject(
                         DeleteObjectRequest.builder()
