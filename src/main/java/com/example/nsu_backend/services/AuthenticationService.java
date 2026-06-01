@@ -53,6 +53,7 @@ public class AuthenticationService {
             RefreshToken refreshToken = refreshTokenService.getRefreshToken(refreshTokenId);
 
             if (OffsetDateTime.now().isAfter(refreshToken.getExpiresAt())) {
+                log.info("Refresh token expired");
                 throw new ApiException("Invalid refresh token");
             }
 

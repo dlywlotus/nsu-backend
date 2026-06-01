@@ -90,7 +90,7 @@ public class UserService {
     public UserDetails updateProfileIcon(MultipartFile file) {
 
         UUID userId = getCurrentUserId();
-        String imageKey = userId.toString();
+        String imageKey = UUID.randomUUID().toString();
 
         try {
             // 1. Upload to S3 first
