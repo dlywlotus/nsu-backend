@@ -1,7 +1,6 @@
 spring:
   application:
     name: nsu-backend
-
   datasource:
     url: ${POSTGRES_URL}
     username: ${POSTGRES_USERNAME}

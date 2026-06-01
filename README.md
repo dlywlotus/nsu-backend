@@ -10,7 +10,9 @@ A Spring Boot REST API backend for the NSU web forum.
 docker compose up -d
 ```
 
-Then, navigate to the RustFs console via, `http://localhost:9001/` and create a bucket with:
+Then, navigate to the RustFs console via, `http://localhost:9001/`,
+login with the credentials found in application-local.yml,
+and create a bucket with:
 
 1. Name set to exactly `profile-icons`
 2. Access policy set to `public`

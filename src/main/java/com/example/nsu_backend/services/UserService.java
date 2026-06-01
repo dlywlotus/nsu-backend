@@ -88,24 +88,31 @@ public class UserService {
 
     @Transactional
     public UserDetails updateProfileIcon(MultipartFile file) {
-
         UUID userId = getCurrentUserId();
-        String imageKey = UUID.randomUUID().toString();
+        User user = userRepository.findById(userId).orElseThrow(() -> new ApiException("User not found"));
+        String newImageKey = UUID.randomUUID().toString();
 
         try {
-            // 1. Upload to S3 first
+            // Delete old image from object store
+            s3Client.deleteObject(
+                    DeleteObjectRequest.builder()
+                            .bucket("profile-icons")
+                            .key(user.getProfileIconImageKey())
+                            .build()
+            );
+
+            // Add new image to object store
             s3Client.putObject(
                     PutObjectRequest.builder()
                             .bucket("profile-icons")
-                            .key(imageKey)
+                            .key(newImageKey)
                             .contentType(file.getContentType())
                             .build(),
                     RequestBody.fromInputStream(file.getInputStream(), file.getSize())
             );
 
             // 2. Update DB
-            User user = userRepository.findById(userId).orElseThrow(() -> new ApiException("User not found"));
-            user.setProfileIconImageKey(imageKey);
+            user.setProfileIconImageKey(newImageKey);
             User saved = userRepository.save(user);
             return userMapper.userToUserDto(saved);
 
@@ -114,7 +121,7 @@ public class UserService {
                 s3Client.deleteObject(
                         DeleteObjectRequest.builder()
                                 .bucket("profile-icons")
-                                .key(imageKey)
+                                .key(newImageKey)
                                 .build()
                 );
             } catch (Exception cleanupEx) {

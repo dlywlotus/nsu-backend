@@ -8,7 +8,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 public class NsuBackendApplication {
 
-    // TODO: Implement some sort of rate limiting
+    // TODO: Implement rate limiting via bucket4j
+    // TODO: Add a CDN (cloudflare)
 
     public static void main(String[] args) {
         SpringApplication.run(NsuBackendApplication.class, args);
