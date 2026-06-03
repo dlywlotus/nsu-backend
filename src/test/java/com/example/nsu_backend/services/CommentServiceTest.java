@@ -45,6 +45,8 @@ public class CommentServiceTest {
     private PostService postService;
     @Mock
     private UserService userService;
+    @Spy
+    private RateLimitingService rateLimitingService;
 
     @Spy
     private CommentMapper commentMapper = Mappers.getMapper(CommentMapper.class);
@@ -56,6 +58,8 @@ public class CommentServiceTest {
     public void givenParentNotFound_whenCreateComment_throwException() {
         // Treat comment 999 as a comment that does not exist
         when(commentRepository.findById(999L)).thenReturn(Optional.empty());
+        when(userService.getCurrentUserId()).thenReturn(UUID.randomUUID());
+
         assertThrows(EntityNotFoundException.class, () ->
                 commentService.addComment(new AddCommentRequest("New comment", UUID.randomUUID(), 999L)));
     }
@@ -70,6 +74,7 @@ public class CommentServiceTest {
         Comment nestedComment = Comment.builder().id(3L).post(postOne).author(userOne).parentComment(topLevelComment).build();
 
         when(commentRepository.findById(2L)).thenReturn(Optional.of(nestedComment));
+        when(userService.getCurrentUserId()).thenReturn(UUID.randomUUID());
 
         assertThrows(NestedCommentException.class, () ->
                 commentService.addComment(new AddCommentRequest("New comment", postOneId, 2L)));
@@ -91,6 +96,7 @@ public class CommentServiceTest {
 
         when(commentRepository.findById(1L)).thenReturn(Optional.of(topLevelComment));
         when(commentRepository.save(any())).thenReturn(newComment);
+        when(userService.getCurrentUserId()).thenReturn(UUID.randomUUID());
 
         CommentDetails newCommentDto = commentService.addComment(newCommentRequest);
         assertAll(

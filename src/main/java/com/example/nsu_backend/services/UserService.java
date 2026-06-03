@@ -17,6 +17,7 @@ import com.example.nsu_backend.dto.UpdateUsernameRequest;
 import com.example.nsu_backend.dto.UserDetails;
 import com.example.nsu_backend.entities.User;
 import com.example.nsu_backend.exceptions.ApiException;
+import com.example.nsu_backend.exceptions.RateLimitException;
 import com.example.nsu_backend.exceptions.UserLoginException;
 import com.example.nsu_backend.mappers.UserMapper;
 import com.example.nsu_backend.repositories.UserRepository;
@@ -37,6 +38,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final S3Client s3Client;
+    private final RateLimitingService rateLimitingService;
 
     public UserDetails getUser(UUID userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException("User not found"));
@@ -89,6 +91,11 @@ public class UserService {
     @Transactional
     public UserDetails updateProfileIcon(MultipartFile file) {
         UUID userId = getCurrentUserId();
+
+        if (!rateLimitingService.resolveUpdateProfileIconBucket(userId.toString()).tryConsume(1)) {
+            throw new RateLimitException("Too many requests");
+        }
+        
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException("User not found"));
         String newImageKey = UUID.randomUUID().toString();
 

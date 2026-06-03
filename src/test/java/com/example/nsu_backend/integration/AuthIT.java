@@ -72,7 +72,7 @@ class AuthIT {
 
         // After the first refresh, the previous refresh token should be invalidated
         // So the second refresh with the same refresh token, after the grace period of 1s (to handle race conditions), will fail
-        Thread.sleep(1500);
+        Thread.sleep(2000);
         client.post().uri("/refresh_token").cookie("refresh_token", refreshToken).exchange().expectStatus().is4xxClientError();
 
         // Using the invalidated refresh token triggers the deletion of all refresh tokens associated with the user

@@ -29,9 +29,10 @@ public class CommentControllerTest {
     @Autowired
     private RestTestClient client;
     @MockitoBean
-    private AccessTokenService accessTokenService;
-    @MockitoBean
     private CommentService commentService;
+
+    @MockitoBean
+    private AccessTokenService accessTokenService;
 
     @Test
     public void givenValidCommentBody_whenCreateComment_shouldSucceed() {

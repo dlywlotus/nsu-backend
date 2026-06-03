@@ -1,15 +1,25 @@
 package com.example.nsu_backend.controllers;
 
-import com.example.nsu_backend.dto.*;
+import java.util.UUID;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.nsu_backend.dto.CookieAuthResponse;
+import com.example.nsu_backend.dto.MessageResponse;
+import com.example.nsu_backend.dto.SignInRequest;
+import com.example.nsu_backend.dto.SignUpRequest;
+import com.example.nsu_backend.dto.UserAuthResponse;
 import com.example.nsu_backend.services.AuthenticationService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @Slf4j
 @RestController

@@ -16,6 +16,7 @@ import com.example.nsu_backend.dto.UserAuthResponse;
 import com.example.nsu_backend.entities.RefreshToken;
 import com.example.nsu_backend.entities.User;
 import com.example.nsu_backend.exceptions.ApiException;
+import com.example.nsu_backend.exceptions.RateLimitException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,12 +28,17 @@ public class AuthenticationService {
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
     private final AccessTokenService accessTokenService;
+    private final RateLimitingService rateLimitingService;
 
     public void signUp(SignUpRequest request) {
         userService.saveUser(request);
     }
 
     public CookieAuthResponse signIn(SignInRequest request) {
+        if (!rateLimitingService.resolveLoginBucket(request.username()).tryConsume(1)) {
+            throw new RateLimitException("Too many requests");
+        }
+
         User user = userService.validateUserDetails(request);
         String accessToken = accessTokenService.createAccessToken(user.getId());
         UUID newRefreshTokenId = refreshTokenService.createToken(user.getId());

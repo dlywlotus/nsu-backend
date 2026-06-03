@@ -18,6 +18,7 @@ import com.example.nsu_backend.dto.UpdatePostRequest;
 import com.example.nsu_backend.dto.VerbosePostDetails;
 import com.example.nsu_backend.entities.Post;
 import com.example.nsu_backend.exceptions.ApiException;
+import com.example.nsu_backend.exceptions.RateLimitException;
 import com.example.nsu_backend.mappers.PostMapper;
 import com.example.nsu_backend.repositories.PostRepository;
 import com.example.nsu_backend.repositories.UserRepository;
@@ -35,6 +36,7 @@ public class PostService {
     private final PostMapper postMapper;
     private final JdbcClient jdbcClient;
     private final UserService userService;
+    private final RateLimitingService rateLimitingService;
 
     public VerbosePostDetails getPost(UUID postId) {
         String sql = """
@@ -59,6 +61,11 @@ public class PostService {
     }
 
     public PostDetails createPost(AddPostRequest request) {
+        String userId = userService.getCurrentUserId().toString();
+        if (!rateLimitingService.resolveCreatePostBucket(userId).tryConsume(1)) {
+            throw new RateLimitException("Too many requests");
+        }
+
         Post post = Post.builder()
                 .title(request.getTitle())
                 .body(request.getBody())

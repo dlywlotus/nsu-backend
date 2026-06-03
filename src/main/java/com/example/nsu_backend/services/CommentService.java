@@ -12,6 +12,7 @@ import com.example.nsu_backend.dto.AddCommentRequest;
 import com.example.nsu_backend.dto.CommentDetails;
 import com.example.nsu_backend.entities.Comment;
 import com.example.nsu_backend.exceptions.NestedCommentException;
+import com.example.nsu_backend.exceptions.RateLimitException;
 import com.example.nsu_backend.mappers.CommentMapper;
 import com.example.nsu_backend.repositories.CommentRepository;
 import com.example.nsu_backend.repositories.PostRepository;
@@ -32,9 +33,15 @@ public class CommentService {
     private final CommentMapper commentMapper;
     private final UserService userService;
     private final PostService postService;
+    private final RateLimitingService rateLimitingService;
 
     @Transactional
     public CommentDetails addComment(AddCommentRequest request) {
+        String userId = userService.getCurrentUserId().toString();
+        if (!rateLimitingService.resolveCreateCommentBucket(userId).tryConsume(1)) {
+            throw new RateLimitException("Too many requests");
+        }
+
         if (request.parentCommentId() != null) {
             Comment parentComment = commentRepository.findById(request.parentCommentId()).orElseThrow(
                     () -> new EntityNotFoundException("Parent comment not found."));
