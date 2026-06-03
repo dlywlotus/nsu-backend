@@ -11,6 +11,8 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +28,7 @@ import com.example.nsu_backend.entities.Comment;
 import com.example.nsu_backend.entities.Post;
 import com.example.nsu_backend.entities.User;
 import com.example.nsu_backend.exceptions.NestedCommentException;
+import com.example.nsu_backend.exceptions.RateLimitException;
 import com.example.nsu_backend.mappers.CommentMapper;
 import com.example.nsu_backend.repositories.CommentRepository;
 import com.example.nsu_backend.repositories.PostRepository;
@@ -53,6 +56,21 @@ public class CommentServiceTest {
 
     @InjectMocks
     private CommentService commentService;
+
+    @Test
+    public void givenRateLimits_whenTooManyCreateCommentRequests_throwsException() {
+        when(userService.getCurrentUserId()).thenReturn(UUID.randomUUID());
+        List<CompletableFuture<CommentDetails>> withinLimitRequests = Stream.generate(
+                        () -> CompletableFuture.supplyAsync(
+                                () -> commentService.addComment(new AddCommentRequest("", UUID.randomUUID(), null))))
+                .limit(60)
+                .toList();
+        CompletableFuture.allOf(withinLimitRequests.toArray(new CompletableFuture<?>[0])).join();
+
+        //Make 61th request that exceeds limit
+        assertThrows(RateLimitException.class,
+                () -> commentService.addComment(new AddCommentRequest("", UUID.randomUUID(), null)));
+    }
 
     @Test
     public void givenParentNotFound_whenCreateComment_throwException() {
