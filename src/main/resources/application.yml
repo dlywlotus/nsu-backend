@@ -27,3 +27,7 @@ rust-fs:
 springdoc:
   api-docs:
     path: /api-docs
+
+frontend:
+  server:
+    url: ${FRONT_END_SERVER_URL}

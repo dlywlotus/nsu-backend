@@ -17,9 +17,10 @@ and create a bucket with:
 1. Name set to exactly `profile-icons`
 2. Access policy set to `public`
 
-### 2. Set up application profiles
+### 2. Start the spring boot server
 
-Configure spring to use the application-local profile to load local dev configs.
+Then, start the spring server with `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`.
+This starts the spring server with the properties defined in application-local.yml.
 
 ## Api Documentation
 
