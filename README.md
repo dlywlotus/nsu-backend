@@ -42,11 +42,11 @@ Once running, Swagger UI is available at: `http://localhost:8080/swagger-ui/inde
 
 ### Tech stack
 
-Security: Spring Security
-Database: PostgreSQL
-Database abstraction layer: Spring Data Jpa
-Media Storage: RustFs (S3 compatible)
-Rate limiting: Bucket4J
+- Security: Spring Security
+- Database: PostgreSQL
+- Database abstraction layer: Spring Data Jpa
+- Media Storage: RustFs (S3 compatible)
+- Rate limiting: Bucket4J
 
 ### Authentication 
 
