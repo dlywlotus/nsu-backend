@@ -1,6 +1,6 @@
 # NSU Forums Backend
 
-A Spring Boot REST API backend for the NSU web forum.
+A Spring Boot REST API backend for the NSU web forum application.
 
 ## Getting Started
 
