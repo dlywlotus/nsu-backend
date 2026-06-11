@@ -74,7 +74,7 @@ public class RefreshTokenService {
                 .secure(true)
                 .path("/")
                 .maxAge(Duration.ofDays(30))
-                .sameSite("Lax") // Helps mitigate CSRF
+                .sameSite("None") // Helps mitigate CSRF
                 .build();
     }
 
