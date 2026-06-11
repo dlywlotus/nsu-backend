@@ -1,3 +1,9 @@
+Note for railway deployment:
+
+- To access the admin console, start a tcp connection to port 9001 and then sign in with admin and
+  123
+- After setting the profile icons bucket, delete the tcp connection
+
 # NSU Forums Backend
 
 A Spring Boot REST API backend for the NSU web forum application.
