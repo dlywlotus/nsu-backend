@@ -124,8 +124,8 @@ public class PostService {
 
         if (!Objects.isNull(request.searchInput())) {
             paramMap.put("searchInput", request.searchInput());
-            postsQuery.append(" AND p.search_vector @@ to_tsquery('english', :searchInput)");
-            countQuery.append(" AND p.search_vector @@ to_tsquery('english', :searchInput)");
+            postsQuery.append(" AND p.search_vector @@ plainto_tsquery('english', :searchInput)");
+            countQuery.append(" AND p.search_vector @@ plainto_tsquery('english', :searchInput)");
         }
 
         if (!Objects.isNull(request.authorId())) {
