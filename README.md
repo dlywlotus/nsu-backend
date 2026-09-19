@@ -51,12 +51,9 @@ Once running, Swagger UI is available at: `http://localhost:8080/swagger-ui/inde
 
 ### Authentication
 
-The authentication system implementation is inspired by OAuth2.0 and involves access and refresh
+The authentication system implementation involves OIDC and internal access and refresh
 tokens. A security filter is set up to intercept requests and validate access tokens if they are
-attached. The access tokens are short lived while the refresh tokens last much longer. Upon token
-refresh, the old refresh token is invalidated and a new one is returned. Reuse detection is also
-added to detect malicious usage. If an already invalidated refresh token is used, all refresh tokens
-tied to the user will be deleted to stop further malicious usage. 
+attached. The access tokens are short-lived while the refresh tokens last much longer. 
 
 
 

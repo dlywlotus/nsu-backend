@@ -10,6 +10,10 @@ spring:
 jwt:
   secret_key: 1zYXesEADTwdSWVn5I//DRqStEMuYKrMJNs9rGKk9n4=
 
+oidc:
+  google:
+    client_secret: ${GOOGLE_OIDC_CLIENT_SECRET:dummy-secret}
+
 rust-fs:
   uri: http://localhost:9000
   access_key: admin

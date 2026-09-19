@@ -22,13 +22,14 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.example.nsu_backend.dto.AddPostRequest;
+import com.example.nsu_backend.dto.CreateUserRequest;
 import com.example.nsu_backend.dto.PageOfPosts;
 import com.example.nsu_backend.dto.PostDetails;
-import com.example.nsu_backend.dto.SignInRequest;
-import com.example.nsu_backend.dto.SignUpRequest;
 import com.example.nsu_backend.dto.UpdatePostRequest;
-import com.example.nsu_backend.dto.UserAuthResponse;
+import com.example.nsu_backend.dto.UserDetails;
 import com.example.nsu_backend.enums.Category;
+import com.example.nsu_backend.services.AccessTokenService;
+import com.example.nsu_backend.services.UserService;
 import com.example.nsu_backend.utils.PostgresUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,10 @@ public class PostIT {
     private JdbcClient jdbcClient;
     @Autowired
     private PostgresUtils postgresUtils;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private AccessTokenService accessTokenService;
 
     private WebTestClient client;
     private String accessToken;
@@ -55,15 +60,11 @@ public class PostIT {
     @BeforeEach
     void beforeEach() {
         postgresUtils.clear();
+        UserDetails newUser = userService.createUser(new CreateUserRequest("tester", "googleSub"));
         client = WebTestClient.bindToServer()
                 .baseUrl("http://localhost:" + port)
                 .build();
-        client.post().uri("/sign_up").bodyValue(new SignUpRequest("tester", "123123")).exchange();
-        UserAuthResponse userAuthResponse = client.post().uri("/sign_in")
-                .bodyValue(new SignInRequest("tester", "123123")).exchange().
-                expectBody(UserAuthResponse.class).returnResult().getResponseBody();
-        assertNotNull(userAuthResponse);
-        accessToken = userAuthResponse.accessToken();
+        accessToken = accessTokenService.createAccessToken(newUser.id());
     }
 
     @Test

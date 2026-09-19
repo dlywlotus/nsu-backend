@@ -1,23 +1,38 @@
 package com.example.nsu_backend.controllers;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+
+import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestClient;
 
-import com.example.nsu_backend.dto.CookieAuthResponse;
+import com.example.nsu_backend.dto.AuthCodeRequest;
+import com.example.nsu_backend.dto.CreateUserRequest;
 import com.example.nsu_backend.dto.MessageResponse;
-import com.example.nsu_backend.dto.SignInRequest;
-import com.example.nsu_backend.dto.SignUpRequest;
+import com.example.nsu_backend.dto.TokenExchangeRequest;
+import com.example.nsu_backend.dto.TokenExchangeResponse;
 import com.example.nsu_backend.dto.UserAuthResponse;
-import com.example.nsu_backend.services.AuthenticationService;
+import com.example.nsu_backend.dto.UserDetails;
+import com.example.nsu_backend.entities.RefreshToken;
+import com.example.nsu_backend.exceptions.ApiException;
+import com.example.nsu_backend.exceptions.TokenRefreshException;
+import com.example.nsu_backend.services.AccessTokenService;
+import com.example.nsu_backend.services.RefreshTokenService;
+import com.example.nsu_backend.services.UserService;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,33 +40,62 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 public class AuthenticationController {
-    private final AuthenticationService authenticationService;
+    private final RefreshTokenService refreshTokenService;
+    private final AccessTokenService accessTokenService;
+    private final UserService userService;
+    private final JwtDecoder jwtDecoder;
 
-    @PostMapping("/sign_up")
-    public MessageResponse signUp(@Valid @RequestBody SignUpRequest request) {
-        authenticationService.signUp(request);
-        return new MessageResponse("User has signed up successfully");
+    @Value("${oidc.google.client_secret}")
+    private String clientSecret;
+
+    @PostMapping("/refresh_token")
+    public ResponseEntity<UserAuthResponse> handleTokenRefresh(@CookieValue(name = "refresh_token", defaultValue = "") UUID refreshTokenId) {
+        RefreshToken refreshToken = refreshTokenService.getToken(refreshTokenId);
+
+        if (OffsetDateTime.now().isAfter(refreshToken.getExpiresAt())) {
+            throw new TokenRefreshException("Refresh token expired");
+        }
+
+        UUID userId = refreshToken.getUser().getId();
+        String accessToken = accessTokenService.createAccessToken(userId);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshTokenId.toString())
+                .body(new UserAuthResponse(accessToken, userId));
     }
 
-    @PostMapping("/sign_in")
-    public ResponseEntity<UserAuthResponse> signIn(@Valid @RequestBody SignInRequest request) {
-        CookieAuthResponse response = authenticationService.signIn(request);
+    @PostMapping("/token")
+    public ResponseEntity<UserAuthResponse> exchangeAuthCode(@RequestBody AuthCodeRequest request) {
+        TokenExchangeResponse res = RestClient.create("https://oauth2.googleapis.com/token")
+                .post()
+                .contentType(APPLICATION_JSON)
+                .body(new TokenExchangeRequest(request.authCode(), request.clientId(), clientSecret,
+                        "http://localhost:5173/auth-callback", "authorization_code"))
+                .accept(APPLICATION_JSON)
+                .retrieve().body(TokenExchangeResponse.class);
+
+        if (res == null) {
+            throw new ApiException("Invalid authorization code");
+        }
+
+        Jwt jwt = jwtDecoder.decode(res.idToken());
+        Map<String, Object> claimsMap = jwt.getClaims();
+        String googleSub = claimsMap.get("sub").toString();
+        String username = claimsMap.get("name").toString();
+
+        UserDetails userDetails = userService.createUser(new CreateUserRequest(username, googleSub));
+        ResponseCookie refreshTokenCookie = refreshTokenService.generateCookie(refreshTokenService.createToken(userDetails.id()));
+        String accessToken = accessTokenService.createAccessToken(userDetails.id());
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, response.cookie().toString())
-                .body(response.userAuthResponse());
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                .body(new UserAuthResponse(accessToken, userDetails.id()));
     }
 
     @PostMapping("/sign_out")
     public MessageResponse signOut(@CookieValue(name = "refresh_token", defaultValue = "") UUID refreshTokenId) {
-        authenticationService.signOut(refreshTokenId);
+        refreshTokenService.removeToken(refreshTokenId);
         return new MessageResponse("Successfully logged out");
-    }
-
-    @PostMapping("/refresh_token")
-    public ResponseEntity<UserAuthResponse> handleTokenRefresh(@CookieValue(name = "refresh_token", defaultValue = "") UUID refreshTokenId) {
-        CookieAuthResponse res = authenticationService.handleTokenRefresh(refreshTokenId);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, res.cookie().toString()).body(res.userAuthResponse());
     }
 
     @GetMapping("/test_secure")

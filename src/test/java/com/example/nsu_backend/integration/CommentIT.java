@@ -20,7 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import com.example.nsu_backend.dto.AddCommentRequest;
 import com.example.nsu_backend.dto.AddPostRequest;
 import com.example.nsu_backend.dto.CommentDetails;
-import com.example.nsu_backend.dto.SignUpRequest;
+import com.example.nsu_backend.dto.CreateUserRequest;
 import com.example.nsu_backend.dto.UserDetails;
 import com.example.nsu_backend.enums.Category;
 import com.example.nsu_backend.services.CommentService;
@@ -49,7 +49,7 @@ public class CommentIT {
     void beforeEach() {
         // Set up user and post
         postgresUtils.clear();
-        UserDetails newUser = userService.saveUser(new SignUpRequest("tester", "123123"));
+        UserDetails newUser = userService.createUser(new CreateUserRequest("tester", "googleSub"));
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(newUser.id(), null, List.of());
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);

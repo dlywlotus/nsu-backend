@@ -2,5 +2,6 @@ package com.example.nsu_backend.dto;
 
 import java.util.UUID;
 
-public record UserDetails(UUID id, String username, String profileIconImageKey) {
+public record UserDetails(UUID id, String username, String profileIconImageKey,
+                          String googleSubject) {
 }

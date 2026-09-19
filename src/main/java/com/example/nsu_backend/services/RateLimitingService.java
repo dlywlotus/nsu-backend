@@ -12,12 +12,6 @@ import io.github.bucket4j.Bucket;
 
 @Component
 public class RateLimitingService {
-    private final LoadingCache<String, Bucket> loginBucketCache = Caffeine.newBuilder()
-            .expireAfterAccess(1, TimeUnit.HOURS)
-            .build(key -> Bucket.builder()
-                    .addLimit(limit -> limit.capacity(5)
-                            .refillGreedy(5, Duration.ofMinutes(1))).build());
-
     private final LoadingCache<String, Bucket> createPostBucketCache = Caffeine.newBuilder()
             .expireAfterAccess(2, TimeUnit.HOURS)
             .build(key -> Bucket.builder()
@@ -36,9 +30,6 @@ public class RateLimitingService {
                     .addLimit(limit -> limit.capacity(5)
                             .refillGreedy(5, Duration.ofHours(1))).build());
 
-    public Bucket resolveLoginBucket(String key) {
-        return loginBucketCache.get(key);
-    }
 
     public Bucket resolveCreatePostBucket(String key) {
         return createPostBucketCache.get(key);

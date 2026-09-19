@@ -2,17 +2,13 @@ package com.example.nsu_backend.services;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.example.nsu_backend.dto.RevokedTokenDetails;
 import com.example.nsu_backend.entities.RefreshToken;
-import com.example.nsu_backend.exceptions.ApiException;
+import com.example.nsu_backend.exceptions.TokenRefreshException;
 import com.example.nsu_backend.repositories.RefreshTokenRepository;
 import com.example.nsu_backend.repositories.UserRepository;
 
@@ -23,11 +19,9 @@ import lombok.RequiredArgsConstructor;
 public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
-    private final UserService userService;
 
-    public RefreshToken getRefreshToken(UUID refreshTokenId) {
-        return refreshTokenRepository.findById(refreshTokenId)
-                .orElseThrow(() -> new ApiException("Invalid refresh token"));
+    public RefreshToken getToken(UUID refreshTokenId) {
+        return refreshTokenRepository.findById(refreshTokenId).orElseThrow(() -> new TokenRefreshException("Refresh token expired"));
     }
 
     public UUID createToken(UUID userId) {
@@ -39,33 +33,12 @@ public class RefreshTokenService {
         return savedRefreshToken.getId();
     }
 
-    public void setSuccessorToken(UUID revokedTokenId, UUID successorTokenId) {
-        refreshTokenRepository.setSuccessorToken(revokedTokenId, successorTokenId);
-    }
-
     public void removeToken(UUID tokenId) {
-        UUID currentUserId = userService.getCurrentUserId();
-        RefreshToken refreshToken = refreshTokenRepository.findById(tokenId)
-                .orElseThrow(() -> new ApiException("Invalid refresh token provided"));
-
-        if (!refreshToken.getUser().getId().equals(currentUserId)) {
-            throw new ApiException("Invalid refresh token provided");
-        }
-
         refreshTokenRepository.deleteById(tokenId);
     }
 
     public void cleanUpExpiredTokens() {
         refreshTokenRepository.cleanUpExpiredTokens();
-    }
-
-    public List<RevokedTokenDetails> revokeToken(UUID refreshTokenId) {
-        return refreshTokenRepository.revokeToken(refreshTokenId);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void deleteAllRefreshTokensForUser(UUID userId) {
-        refreshTokenRepository.deleteByUserId(userId);
     }
 
     public ResponseCookie generateCookie(UUID refreshTokenId) {
@@ -74,8 +47,7 @@ public class RefreshTokenService {
                 .secure(true)
                 .path("/")
                 .maxAge(Duration.ofDays(30))
-                .sameSite("None") // Helps mitigate CSRF
+                .sameSite("None")
                 .build();
     }
-
 }

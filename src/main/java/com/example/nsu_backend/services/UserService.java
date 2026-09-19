@@ -6,19 +6,16 @@ import java.util.UUID;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.nsu_backend.dto.SignInRequest;
-import com.example.nsu_backend.dto.SignUpRequest;
+import com.example.nsu_backend.dto.CreateUserRequest;
 import com.example.nsu_backend.dto.UpdateUsernameRequest;
 import com.example.nsu_backend.dto.UserDetails;
 import com.example.nsu_backend.entities.User;
 import com.example.nsu_backend.exceptions.ApiException;
 import com.example.nsu_backend.exceptions.RateLimitException;
-import com.example.nsu_backend.exceptions.UserLoginException;
 import com.example.nsu_backend.mappers.UserMapper;
 import com.example.nsu_backend.repositories.UserRepository;
 
@@ -35,7 +32,6 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 public class UserService {
     public static final UUID UNAUTHENTICATED_USER_ID = UUID.randomUUID();
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final S3Client s3Client;
     private final RateLimitingService rateLimitingService;
@@ -44,31 +40,18 @@ public class UserService {
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException("User not found"));
         return userMapper.userToUserDto(user);
     }
-
-    public UserDetails saveUser(SignUpRequest request) {
-        userRepository.findByUsername(request.username()).ifPresent(user -> {
-            throw new ApiException("Account with the specified username already exists");
-        });
-
-        User user = User.builder()
-                .username(request.username())
-                .encryptedPassword(passwordEncoder.encode(request.password()))
-                .build();
-        User newUser = userRepository.save(user);
-        return new UserDetails(newUser.getId(), newUser.getUsername(), newUser.getProfileIconImageKey());
-    }
-
-    public User validateUserDetails(SignInRequest request) {
-        User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new UserLoginException("Invalid username or password"));
-
-        if (!passwordEncoder.matches(request.password(), user.getEncryptedPassword())) {
-            throw new UserLoginException("Invalid username or password");
+    
+    public UserDetails createUser(CreateUserRequest request) {
+        Optional<User> user = userRepository.findByGoogleSubject(request.googleSubject());
+        if (user.isPresent()) {
+            return userMapper.userToUserDto(user.get());
         }
 
-        return user;
+        User newUser = User.builder()
+                .username(request.username())
+                .googleSubject(request.googleSubject()).build();
+        return userMapper.userToUserDto(userRepository.save(newUser));
     }
-
 
     public UUID getCurrentUserId() {
         return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
@@ -87,7 +70,6 @@ public class UserService {
         return userMapper.userToUserDto(userRepository.save(user));
     }
 
-
     @Transactional
     public UserDetails updateProfileIcon(MultipartFile file) {
         UUID userId = getCurrentUserId();
@@ -95,7 +77,7 @@ public class UserService {
         if (!rateLimitingService.resolveUpdateProfileIconBucket(userId.toString()).tryConsume(1)) {
             throw new RateLimitException("Too many requests");
         }
-        
+
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException("User not found"));
         String newImageKey = UUID.randomUUID().toString();
 
