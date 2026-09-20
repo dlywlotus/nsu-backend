@@ -40,7 +40,7 @@ public class UserService {
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException("User not found"));
         return userMapper.userToUserDto(user);
     }
-    
+
     public UserDetails createUser(CreateUserRequest request) {
         Optional<User> user = userRepository.findByGoogleSubject(request.googleSubject());
         if (user.isPresent()) {
@@ -108,7 +108,7 @@ public class UserService {
             return userMapper.userToUserDto(saved);
 
         } catch (Exception ex) {
-            log.error(ex.getMessage());
+            log.error("Failed to update profile icon", ex);
             try {
                 s3Client.deleteObject(
                         DeleteObjectRequest.builder()

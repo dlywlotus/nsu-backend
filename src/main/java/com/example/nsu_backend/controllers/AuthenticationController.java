@@ -45,6 +45,9 @@ public class AuthenticationController {
     private final UserService userService;
     private final JwtDecoder jwtDecoder;
 
+    @Value("${frontend.server.url}")
+    private String frontEndServerUrl;
+
     @Value("${oidc.google.client_secret}")
     private String clientSecret;
 
@@ -70,7 +73,7 @@ public class AuthenticationController {
                 .post()
                 .contentType(APPLICATION_JSON)
                 .body(new TokenExchangeRequest(request.authCode(), request.clientId(), clientSecret,
-                        "http://localhost:5173/auth-callback", "authorization_code"))
+                        frontEndServerUrl + "/auth-callback", "authorization_code"))
                 .accept(APPLICATION_JSON)
                 .retrieve().body(TokenExchangeResponse.class);
 
