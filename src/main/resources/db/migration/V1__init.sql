@@ -2,8 +2,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE users (
    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-   username VARCHAR(255) UNIQUE,
-   encrypted_password VARCHAR(255) NOT NULL,
+   username VARCHAR(255),
+   google_subject VARCHAR(255),
    profile_icon_image_key VARCHAR(255)
 );
 

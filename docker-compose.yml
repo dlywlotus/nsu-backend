@@ -1,6 +1,5 @@
 services:
   postgres:
-    container_name: postgres
     image: postgres:17
     environment:
       - POSTGRES_DB=nsu
@@ -12,7 +11,6 @@ services:
       - db-data:/var/lib/postgresql/data
 
   rust-fs:
-    container_name: rust-fs
     image: rustfs/rustfs:latest
     environment:
       - RUSTFS_ACCESS_KEY=admin

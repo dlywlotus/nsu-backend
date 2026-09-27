@@ -19,6 +19,10 @@ spring:
 jwt:
   secret_key: ${JWT_SECRET_KEY}
 
+oidc:
+  google:
+    client_secret: ${GOOGLE_OIDC_CLIENT_SECRET}
+
 rust-fs:
   uri: ${RUST_FS_URI}
   access_key: ${RUST_FS_ACCESS_KEY}

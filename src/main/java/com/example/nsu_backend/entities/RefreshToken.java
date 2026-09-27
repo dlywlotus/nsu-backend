@@ -34,12 +34,6 @@ public class RefreshToken {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private boolean isRevoked;
-
     @Column(nullable = false)
     private OffsetDateTime expiresAt;
-
-    private OffsetDateTime revokedAt;
-
-    private UUID successorTokenId;
 }

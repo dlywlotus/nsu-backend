@@ -11,8 +11,8 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(requests ->
-                        requests.requestMatchers("/sign_in", "/sign_up", "/error", "/refresh_token", "/api-docs/**", "/swagger-ui/**").permitAll()
+                        requests.requestMatchers("/sign_out", "/error", "/refresh_token", "/api-docs/**", "/swagger-ui/**", "/token").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/post/**", "/posts/**").permitAll()
                                 .anyRequest().authenticated())
                 .addFilterBefore(accessTokenFilter, AuthorizationFilter.class)
@@ -59,6 +59,13 @@ public class SecurityConfig {
         return source;
     }
 
+    @Bean
+    JwtDecoder jwtDecoder() {
+        return NimbusJwtDecoder
+                .withJwkSetUri("https://www.googleapis.com/oauth2/v3/certs")
+                .build();
+    }
+
     // To disable UserDetailsServiceAutoConfiguration
     @Bean
     public AuthenticationManager noAuthenticationManager() {
@@ -66,10 +73,4 @@ public class SecurityConfig {
             throw new AuthenticationServiceException("Authentication is disabled");
         };
     }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
-    }
-
 }
