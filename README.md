@@ -53,8 +53,13 @@ Once running, Swagger UI is available at: `http://localhost:8080/swagger-ui/inde
 
 The authentication system implementation involves OIDC and internal access and refresh
 tokens. A security filter is set up to intercept requests and validate access tokens if they are
-attached. The access tokens are short-lived while the refresh tokens last much longer. 
+attached. The access tokens are short-lived while the refresh tokens last much longer.
 
+## Deployment
+
+1. Build the docker image using the following command:
+   `mvn spring-boot:build-image -Dspring-boot.build-image.imageName=dlywlotus/nsu-backend:latest`
+2. Push the image to docker hub using: `docker push dlywlotus/nsu-backend:latest`
 
 
 
